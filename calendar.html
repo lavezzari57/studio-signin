@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Program Calendar</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  /* ---- CALENDAR's own "bent": fresh green wash + ink. Same Studio Sticker DNA. ---- */
+  :root{ --bgc:#d9f2df; --ac:#2fb36a; }
+
+  .lead { margin: 4px 0 16px; display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px 16px; justify-content:space-between; }
+  .lead .ttl h2 { font-family:var(--display); font-weight:800; font-size:clamp(34px,8vw,60px); line-height:.9; letter-spacing:-.035em; margin:6px 0 4px; }
+  .lead .ttl h2 em { font-style:normal; display:inline-block; background:var(--ac); color:#fff; border:var(--b); border-radius:.2em; padding:0 .14em .04em; transform:rotate(-2deg); box-shadow:var(--shadow-sticker); }
+  .hours { font-family:var(--mono); font-size:13px; color:var(--muted); }
+
+  /* view toggle + month nav */
+  .bar2 { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px; }
+  .seg { display:inline-flex; border:var(--b); border-radius:999px; overflow:hidden; box-shadow:var(--shadow-sticker-sm); }
+  .seg button { font:inherit; font-family:var(--display); font-weight:800; cursor:pointer; border:0; background:var(--paper); color:var(--ink); padding:10px 18px; }
+  .seg button[aria-selected="true"] { background:var(--ink); color:var(--paper); }
+  .spacer { flex:1; }
+  .mnav { display:inline-flex; align-items:center; gap:10px; }
+  .mnav button { font:inherit; font-family:var(--display); font-weight:800; cursor:pointer; width:48px; height:48px; border:var(--b); border-radius:50%; background:var(--paper); box-shadow:var(--shadow-sticker-sm); }
+  .mnav button:active { transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
+  .mnav button[disabled]{ opacity:.35; pointer-events:none; }
+  .mlabel { font-family:var(--display); font-weight:800; font-size:20px; min-width:150px; text-align:center; }
+
+  /* legend */
+  .legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:16px; }
+  .lg { display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .dot { width:15px; height:15px; border-radius:5px; border:2px solid var(--ink); }
+
+  /* month grid */
+  .grid-wrap { background:var(--paper); border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); overflow:hidden; }
+  .dow { display:grid; grid-template-columns:repeat(7,1fr); background:color-mix(in srgb, var(--ac) 16%, var(--paper)); border-bottom:var(--b); }
+  .dow span { font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:center; padding:9px 0; }
+  .cells { display:grid; grid-template-columns:repeat(7,1fr); }
+  .cell { min-height:94px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px; display:flex; flex-direction:column; gap:4px; }
+  .cell:nth-child(7n){ border-right:0; }
+  .cell.out { background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(30,26,43,.03) 6px,rgba(30,26,43,.03) 12px); }
+  .cell .dnum { font-family:var(--display); font-weight:700; font-size:14px; color:var(--muted); }
+  .cell.today .dnum { background:var(--ink); color:var(--paper); border-radius:50%; width:26px; height:26px; display:grid; place-items:center; }
+  .ev { font-size:11.5px; font-weight:600; line-height:1.15; border:2px solid var(--ink); border-radius:7px; padding:2px 5px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; box-shadow:1.5px 1.5px 0 var(--ink); }
+  .more { font-family:var(--mono); font-size:10.5px; color:var(--muted); cursor:pointer; }
+
+  /* list view */
+  .list { display:flex; flex-direction:column; gap:14px; }
+  .daygroup { background:var(--paper); border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); overflow:hidden; }
+  .daygroup h4 { font-family:var(--display); font-weight:800; font-size:17px; margin:0; padding:12px 16px; background:color-mix(in srgb, var(--ac) 14%, var(--paper)); border-bottom:var(--b); }
+  .li { display:flex; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); align-items:flex-start; cursor:pointer; }
+  .li:last-child{ border-bottom:0; }
+  .li .time { font-family:var(--mono); font-size:12px; color:var(--muted); min-width:74px; padding-top:2px; }
+  .li .body b { font-family:var(--display); font-size:16px; }
+  .li .chip { display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; border:2px solid var(--ink); border-radius:999px; padding:1px 8px; margin-left:8px; vertical-align:middle; }
+
+  .status { font-family:var(--mono); font-size:12.5px; color:var(--muted); margin:16px 0 0; }
+
+  /* TV mode */
+  body.tv .ttc-topbar, body.tv .bar2, body.tv .legend, body.tv .status { display:none; }
+  body.tv .lead { justify-content:center; text-align:center; }
+  .tvbtn { position:fixed; right:16px; bottom:16px; z-index:30; }
+
+  h2.modal-h { font-family:var(--display); font-weight:800; letter-spacing:-.02em; margin:0 0 4px; }
+  .modal-meta { font-family:var(--mono); font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+<button class="ttc-btn tvbtn" id="tvbtn">TV mode</button>
+
+<script>
+TTCBar.mount("Program Calendar");
+
+/* ============================================================
+   EVENTS — your real program data lives here, baked in.
+   NOTE: for now, edits save only in THIS browser (localStorage),
+   same as your original calendar. The data layer is isolated so
+   this can move to the shared Supabase later without touching
+   the UI. Add/change events between EVENTS:START and EVENTS:END.
+   ============================================================ */
+/* EVENTS:START */
+const EVENTS = [
+  { id:"studio-orientation", title:"Studio Orientation", kind:"program", date:"2026-09-01", startTime:"14:00", endTime:"18:30", location:"Studio", blurb:"Learn the studio gear and the rules for using it. Drop in any Tuesday. You need this before you use the studio on your own.", recurrence:{freq:"weekly",weekday:2,until:"2026-10-27"}, skipDates:[] },
+  { id:"linkedin-workshop", title:"LinkedIn Workshop", kind:"program", date:"2026-09-01", startTime:"14:00", endTime:"14:45", location:"Teen Tech Center", blurb:"Set up a LinkedIn profile and learn what to put on it. For ages 16 and up. Takes about 45 minutes.", recurrence:{freq:"biweekly",weekday:2,until:"2026-10-27"}, skipDates:[] },
+  { id:"resume-workshop", title:"Resume Workshop", kind:"program", date:"2026-09-08", startTime:"14:00", endTime:"14:45", location:"Teen Tech Center", blurb:"Start or update your resume and get it read by someone before you send it out. Takes about 45 minutes.", recurrence:{freq:"biweekly",weekday:2,until:"2026-10-20"}, skipDates:[] },
+  { id:"music-video", title:"Music Video Program", kind:"program", date:"2026-10-20", startTime:"15:00", endTime:"17:00", location:"Studio", blurb:"Plan, shoot and edit a music video in a group of four to six. You need Studio Orientation first.", recurrence:{freq:"weekly",weekday:2,until:"2026-10-27"}, skipDates:[] },
+  { id:"cal", title:"CAL", kind:"program", date:"2026-09-03", startTime:"15:00", endTime:"17:00", location:"Teen Tech Center", blurb:"CAL meets every Thursday afternoon. Bring the project you are working on or start a new one.", recurrence:{freq:"weekly",weekday:4,until:"2026-10-29"}, skipDates:[] },
+  { id:"youth-council", title:"Youth Council", kind:"program", date:"2026-09-10", startTime:"17:00", endTime:"19:00", location:"Teen Tech Center", blurb:"Help decide what programs and events run here. Meets every other Thursday evening.", recurrence:{freq:"biweekly",weekday:4,until:"2026-10-22"}, skipDates:[] },
+  { id:"open-mic", title:"Open Mic", kind:"event", date:"2026-10-01", startTime:"17:00", endTime:"19:00", location:"Teen Tech Center", blurb:"Perform music, poetry or comedy. Five minutes or two pieces per performer. Sign up in advance.", recurrence:{freq:"biweekly",weekday:4,until:"2026-10-29"}, skipDates:[] },
+  { id:"ftc-robotics-mon", title:"FTC Robotics", kind:"program", date:"2026-09-14", startTime:"14:00", endTime:"17:00", location:"Across the Hall", blurb:"Build and code a competition robot with the team. Meets across the hall on Mondays and Wednesdays.", recurrence:{freq:"weekly",weekday:1,until:"2026-10-26"}, skipDates:["2026-09-21","2026-10-12"] },
+  { id:"ftc-robotics-wed", title:"FTC Robotics", kind:"program", date:"2026-09-16", startTime:"14:00", endTime:"17:00", location:"Across the Hall", blurb:"Build and code a competition robot with the team. Meets across the hall on Mondays and Wednesdays.", recurrence:{freq:"weekly",weekday:3,until:"2026-10-28"}, skipDates:[] },
+  { id:"cookmobile", title:"Cookmobile", kind:"event", date:"2026-09-28", startTime:"16:00", endTime:"18:00", location:"Teen Tech Center", blurb:"Cook a full meal and eat together. Space is limited so say you are coming.", recurrence:{freq:"weekly",weekday:1,until:"2026-10-19"}, skipDates:["2026-10-12"] },
+  { id:"music-video-signup", title:"Music Video Sign Up Closes", kind:"deadline", date:"2026-10-20", startTime:null, endTime:null, location:"Teen Tech Center", blurb:"Last day to join the Music Video Program group. Ask in the Teen Tech Center to get your name on the list.", recurrence:null, skipDates:[] },
+  { id:"closure-labor-day", title:"Closed for Labor Day", kind:"closure", date:"2026-09-07", startTime:null, endTime:null, location:"Teen Tech Center", blurb:"The center is closed today.", recurrence:null, skipDates:[] },
+  { id:"closure-rosh-hashanah", title:"Closed for Rosh Hashanah", kind:"closure", date:"2026-09-12", startTime:null, endTime:null, location:"Teen Tech Center", blurb:"The library is closed today so the center is closed too.", recurrence:null, skipDates:[] },
+  { id:"closure-yom-kippur", title:"Closed for Yom Kippur", kind:"closure", date:"2026-09-21", startTime:null, endTime:null, location:"Teen Tech Center", blurb:"The center is closed today.", recurrence:null, skipDates:[] },
+  { id:"closure-indigenous-peoples", title:"Closed for Indigenous Peoples Day", kind:"closure", date:"2026-10-12", startTime:null, endTime:null, location:"Teen Tech Center", blurb:"The center is closed today. Also called Columbus Day.", recurrence:null, skipDates:[] }
+];
+/* EVENTS:END */
+
+const RANGE = { start:"2026-09", end:"2026-10" };
+const STORE_KEY = "khbb-ttc-calendar-v2";
+const HOURS = "Tue 2–6:30 · Wed 2–5:30 · Thu 2–7 · Fri 1:30–5:30";
+const KINDS = {
+  program:  { label:"Program",  color:"var(--lav)" },
+  event:    { label:"Event",    color:"var(--ac)"  },
+  deadline: { label:"Deadline", color:"var(--sal)" },
+  closure:  { label:"Closed",   color:"var(--muted)" }
+};
+
+// ---- data layer (swap this block for Supabase later; UI never changes) ----
+function loadEvents(){
+  try{ const s=localStorage.getItem(STORE_KEY); if(s){ const p=JSON.parse(s); if(Array.isArray(p)&&p.length) return p; } }catch(e){}
+  return EVENTS;
+}
+let events = loadEvents();
+
+// ---- date helpers ----
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromISO=s=>{ const[y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const monthKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+const pretty=hm=>{ if(!hm)return""; let[h,m]=hm.split(":").map(Number); const ap=h>=12?"pm":"am"; h=h%12||12; return `${h}:${pad(m)}${ap}`; };
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+// expand a recurring event into concrete dates within [from,to]
+function occurrences(ev, from, to){
+  const out=[];
+  const add=dstr=>{ if(dstr>=from && dstr<=to && !(ev.skipDates||[]).includes(dstr)) out.push(Object.assign({}, ev, {date:dstr})); };
+  if(!ev.recurrence){ add(ev.date); return out; }
+  const step = ev.recurrence.freq==="biweekly"?14:7;
+  let cur = fromISO(ev.date); const until = ev.recurrence.until? fromISO(ev.recurrence.until): fromISO(to);
+  let guard=0;
+  while(cur<=until && guard++<400){ add(iso(cur)); cur=new Date(cur.getTime()+step*86400000); }
+  return out;
+}
+function eventsForMonth(mk){
+  const from=`${mk}-01`; const [y,m]=mk.split("-").map(Number); const to=`${mk}-${pad(new Date(y,m,0).getDate())}`;
+  const all=[]; events.forEach(ev=>all.push(...occurrences(ev,from,to)));
+  return all;
+}
+
+// ---- state ----
+let view="month"; let month = monthKey(new Date())>=RANGE.start && monthKey(new Date())<=RANGE.end ? monthKey(new Date()) : RANGE.start;
+const app=document.getElementById("app");
+
+function clampMonth(mk){ return mk<RANGE.start?RANGE.start : mk>RANGE.end?RANGE.end : mk; }
+function shiftMonth(mk,delta){ let[y,m]=mk.split("-").map(Number); m+=delta; if(m<1){m=12;y--;} if(m>12){m=1;y++;} return `${y}-${pad(m)}`; }
+function monthName(mk){ const[y,m]=mk.split("-").map(Number); return new Date(y,m-1,1).toLocaleDateString(undefined,{month:"long",year:"numeric"}); }
+
+function render(){
+  const occ = eventsForMonth(month).sort((a,b)=> a.date===b.date ? (a.startTime||"").localeCompare(b.startTime||"") : a.date.localeCompare(b.date));
+  app.innerHTML =
+    `<div class="lead">
+       <div class="ttl"><span class="mono">Kings Highway · Teen Tech Center</span><h2>What's <em>on</em></h2></div>
+       <div class="hours">${HOURS}</div>
+     </div>` +
+    (document.body.classList.contains("tv")?"":
+    `<div class="bar2">
+       <div class="seg">
+         <button data-view="month" aria-selected="${view==='month'}">Month</button>
+         <button data-view="list" aria-selected="${view==='list'}">List</button>
+       </div>
+       <span class="spacer"></span>
+       <div class="mnav">
+         <button id="prev" ${month<=RANGE.start?'disabled':''}>‹</button>
+         <span class="mlabel">${monthName(month)}</span>
+         <button id="next" ${month>=RANGE.end?'disabled':''}>›</button>
+       </div>
+     </div>
+     <div class="legend">${Object.entries(KINDS).map(([k,v])=>`<span class="lg"><span class="dot" style="background:${v.color}"></span>${v.label}</span>`).join("")}</div>`) +
+    (view==="month"? monthGrid(occ) : listView(occ)) +
+    `<p class="status">Edits save in this browser for now. ${events!==EVENTS?"<b>Showing your saved edits.</b>":""}</p>`;
+  wire();
+}
+
+function monthGrid(occ){
+  const[y,m]=month.split("-").map(Number);
+  const first=new Date(y,m-1,1); const startDow=first.getDay(); const days=new Date(y,m,0).getDate();
+  const todayISO=iso(new Date());
+  const byDay={}; occ.forEach(e=>{ (byDay[e.date]=byDay[e.date]||[]).push(e); });
+  let cells="";
+  for(let i=0;i<startDow;i++) cells+=`<div class="cell out"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${month}-${pad(d)}`; const list=byDay[ds]||[];
+    const shown=list.slice(0,3);
+    cells+=`<div class="cell ${ds===todayISO?'today':''}"><span class="dnum">${d}</span>`+
+      shown.map(e=>`<span class="ev" data-ev="${e.id}" data-date="${e.date}" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${esc(e.title)}</span>`).join("")+
+      (list.length>3?`<span class="more" data-day="${ds}">+${list.length-3} more</span>`:"")+
+      `</div>`;
+  }
+  const trailing=(7-((startDow+days)%7))%7;
+  for(let i=0;i<trailing;i++) cells+=`<div class="cell out"></div>`;
+  return `<div class="grid-wrap"><div class="dow">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<span>${d}</span>`).join("")}</div><div class="cells">${cells}</div></div>`;
+}
+
+function listView(occ){
+  if(!occ.length) return `<div class="daygroup"><div class="li"><div class="body">Nothing scheduled this month.</div></div></div>`;
+  const byDay={}; occ.forEach(e=>{ (byDay[e.date]=byDay[e.date]||[]).push(e); });
+  return `<div class="list">`+Object.keys(byDay).sort().map(ds=>{
+    const d=fromISO(ds); const hd=d.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
+    return `<div class="daygroup"><h4>${hd}</h4>`+byDay[ds].map(e=>
+      `<div class="li" data-ev="${e.id}" data-date="${e.date}">
+         <div class="time">${e.startTime?pretty(e.startTime)+(e.endTime?"–"+pretty(e.endTime):""):"all day"}</div>
+         <div class="body"><b>${esc(e.title)}</b><span class="chip" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${KINDS[e.kind].label}</span><div style="color:var(--muted);font-size:14px;margin-top:2px">${esc(e.location||"")}</div></div>
+       </div>`).join("")+`</div>`;
+  }).join("")+`</div>`;
+}
+
+function wire(){
+  document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{ view=b.dataset.view; render(); });
+  const pv=document.getElementById("prev"); if(pv) pv.onclick=()=>{ month=clampMonth(shiftMonth(month,-1)); render(); };
+  const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{ month=clampMonth(shiftMonth(month,1)); render(); };
+  document.querySelectorAll("[data-ev]").forEach(el=>el.onclick=()=>openEvent(el.dataset.ev, el.dataset.date));
+  document.querySelectorAll("[data-day]").forEach(el=>el.onclick=()=>{ view="list"; render(); });
+}
+
+function openEvent(id, date){
+  const ev=events.find(e=>e.id===id); if(!ev)return;
+  const when = ev.startTime? `${pretty(ev.startTime)}${ev.endTime?" – "+pretty(ev.endTime):""}` : "All day";
+  const dstr = fromISO(date||ev.date).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  TTCBar.modal(
+    `<div class="modal-meta">${KINDS[ev.kind].label} · ${esc(ev.location||"")}</div>
+     <h2 class="modal-h">${esc(ev.title)}</h2>
+     <div class="modal-meta" style="margin-bottom:10px">${dstr} · ${when}</div>
+     <p style="margin:0 0 14px;line-height:1.5">${esc(ev.blurb||"")}</p>
+     <button class="ttc-btn" data-close style="width:100%">Close</button>`
+  );
+}
+
+// TV mode: fullscreen-ish, auto-advance months slowly
+let tvTimer=null;
+document.getElementById("tvbtn").onclick=()=>{
+  document.body.classList.toggle("tv");
+  const on=document.body.classList.contains("tv");
+  document.getElementById("tvbtn").textContent= on? "Exit TV":"TV mode";
+  if(on){ view="month"; tvTimer=setInterval(()=>{ month = month>=RANGE.end?RANGE.start:clampMonth(shiftMonth(month,1)); render(); }, 20000); }
+  else { clearInterval(tvTimer); }
+  render();
+};
+
+render();
+</script>
+</body>
+</html>

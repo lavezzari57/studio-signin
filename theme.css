@@ -1,0 +1,140 @@
+/* =========================================================================
+   KINGS HIGHWAY TEEN TECH CENTER — SHARED THEME  ·  "STUDIO STICKER"
+   -------------------------------------------------------------------------
+   THE STYLE (what makes the kids go "whoa") — keep these moves on every page:
+     1. Hard INK outlines (var(--b)) + hard OFFSET shadow, no blur
+        (var(--shadow-sticker)). Cards/buttons/bubbles look like real stickers.
+     2. Huge chunky display type (Bricolage Grotesque), tight tracking,
+        one word boxed in the accent color and tilted a few degrees.
+     3. Monospace CAPS labels (DM Mono) for the little "gear" labels.
+     4. One bold pastel floods the screen; soft circles bleed off the edges.
+     5. Big round tactile controls that press DOWN on tap (shadow collapses).
+
+   THIS IS YOUR ONE KNOB.
+   Change the accent/pastel block below and EVERY sheet repaints at once.
+   Each sheet also sets its OWN accent at the top of its file (its "bent"),
+   which overrides these for that one sheet only — can't leak back here.
+   Full write-up: STYLE.md in this folder.
+   ========================================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap");
+
+:root {
+  /* ---- Ink / paper (the constants across all sheets) ---- */
+  --ink:    #1e1a2b;   /* near-black, slightly purple — all outlines + text */
+  --paper:  #fffdf8;   /* cards sit on this */
+  --muted:  #575166;   /* secondary text */
+  --line:   rgba(30,26,43,.16);
+
+  /* ---- THE ONE KNOB: screen color + accent ----
+     --bgc = the pastel that floods the whole screen
+     --ac  = the bold accent (boxed words, knobs, active states)        */
+  --bgc:    #ffe9a8;   /* hub default: warm gold wash */
+  --ac:     #ff6fa8;   /* hub default: hot pink pop   */
+  --ac-ink: var(--ink);
+
+  /* ---- Category colors (shared; sheets map these how they like) ---- */
+  --lav:  #b9a6ff;   /* purple */
+  --yel:  #ffd34e;   /* gold   */
+  --sal:  #ff8f6b;   /* coral  */
+  --mint: #5fd0a3;   /* green  */
+  --sky:  #7fc4ff;   /* blue   */
+
+  /* ---- Status ---- */
+  --ok:   #2E7D52;
+  --bad:  #d6453f;
+
+  /* ---- Type ---- */
+  --display:"Bricolage Grotesque","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --sans:   "Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:   "DM Mono",ui-monospace,Menlo,Consolas,monospace;
+
+  /* ---- The Studio Sticker shape language ---- */
+  --b:  2.5px solid var(--ink);            /* the hard outline */
+  --shadow-sticker: 6px 6px 0 var(--ink);  /* the hard offset shadow */
+  --shadow-sticker-sm: 3px 3px 0 var(--ink);
+  --radius: 22px;
+  --radius-sm: 14px;
+  --tap: 60px;   /* big finger targets */
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; }
+body {
+  background: var(--bgc);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.45;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+/* the soft circles bleeding off the edges — the signature backdrop */
+body::before, body::after { content:""; position:fixed; border-radius:50%; pointer-events:none; z-index:0; }
+body::before { width:52vw; height:52vw; right:-16vw; top:-24vw; background:var(--ac); opacity:.30; }
+body::after  { width:40vw; height:40vw; left:-16vw; bottom:-18vw; background:var(--paper); opacity:.5; }
+
+/* ---------- shared building blocks ---------- */
+.ttc-wrap { position:relative; z-index:1; max-width: 1000px; margin: 0 auto; padding: 18px clamp(16px,4vw,40px) 120px; }
+
+.mono { font-family:var(--mono); font-size:12.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+
+.card {
+  background: var(--paper); border: var(--b); border-radius: var(--radius);
+  box-shadow: var(--shadow-sticker);
+}
+
+.ttc-btn {
+  font: inherit; font-family: var(--display); font-weight: 800; letter-spacing:-.01em;
+  min-height: var(--tap); padding: 0 22px; cursor: pointer;
+  border: var(--b); border-radius: 999px; background: var(--paper); color: var(--ink);
+  box-shadow: var(--shadow-sticker-sm);
+  display: inline-flex; align-items:center; justify-content:center; gap:10px;
+  transition: transform .05s, box-shadow .05s;
+}
+.ttc-btn:hover  { transform: translate(-1px,-2px); box-shadow: 5px 6px 0 var(--ink); }
+.ttc-btn:active { transform: translate(3px,3px);  box-shadow: 0 0 0 var(--ink); }
+.ttc-btn-primary { background: var(--ink); color: var(--paper); box-shadow: 4px 4px 0 var(--ac); }
+.ttc-btn-primary:hover  { box-shadow: 6px 7px 0 var(--ac); }
+.ttc-btn-primary:active { box-shadow: 0 0 0 var(--ac); }
+.ttc-btn-danger { background: var(--bad); color:#fff; }
+.ttc-btn[disabled] { opacity:.4; pointer-events:none; }
+
+/* ---------- top bar (home · title · staff) ---------- */
+.ttc-topbar {
+  position: relative; z-index: 2;
+  display:flex; align-items:center; gap:12px;
+  padding: 12px clamp(16px,4vw,40px);
+  padding-top: calc(12px + env(safe-area-inset-top));
+  max-width: 1000px; margin: 0 auto;
+}
+.ttc-home {
+  min-width: var(--tap); min-height: var(--tap); font-size: 24px; cursor:pointer;
+  border: var(--b); border-radius: 50%; background: var(--paper); color: var(--ink);
+  box-shadow: var(--shadow-sticker-sm);
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.ttc-home:active { transform: translate(3px,3px); box-shadow: 0 0 0 var(--ink); }
+.ttc-topbar h1 { font-family: var(--display); font-weight:800; font-size:22px; letter-spacing:-.02em; margin:0; flex:1; line-height:1; }
+
+.ttc-staff {
+  font: inherit; font-family: var(--display); font-weight:800; cursor:pointer;
+  min-height: var(--tap); padding: 0 18px;
+  border: var(--b); border-radius: 999px; background: var(--paper); color: var(--muted);
+  box-shadow: var(--shadow-sticker-sm);
+}
+.ttc-staff:active { transform: translate(3px,3px); box-shadow: 0 0 0 var(--ink); }
+.ttc-staff[data-on="1"] { background: var(--mint); color: var(--ink); }
+
+/* ---------- toast ---------- */
+.ttc-toast {
+  position: fixed; left:50%; bottom:26px; transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--paper); padding: 14px 22px; border-radius: 999px;
+  font-family: var(--display); font-weight:700; opacity:0; pointer-events:none; transition:.22s; z-index:60;
+  max-width: 90vw; text-align:center; box-shadow: 4px 4px 0 var(--ac);
+}
+.ttc-toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+
+/* focus visibility for keyboard/switch users */
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 10px; }
