@@ -28,6 +28,7 @@ window.TTC = (function () {
      `file:null` makes a "coming soon" tile (no page yet).                */
   const PROGRAMS = [
     { id:"studio",      name:"Music Studio",   file:"studio.html",   color:"var(--lav)",  emoji:"🎙️", blurb:"Song + music video sign-in" },
+    { id:"mixdesk",     name:"Vocal Mix Desk", file:"mixdesk.html",  color:"var(--sky)",  emoji:"🎚️", blurb:"Vocal mixing, step by step", guide:true },
     { id:"ftc",         name:"FTC Robotics",   file:"ftc.html",      color:"var(--mint)", emoji:"🤖", blurb:"Robotics team sign-in" },
     { id:"calendar",    name:"Program Calendar", file:"calendar.html", color:"var(--yel)", emoji:"🗓️", blurb:"What's on, and when" },
     { id:"podcasting",  name:"Podcasting",     file:"podcasting.html", color:"var(--lav)",  emoji:"🎧", blurb:"Podcast booth sign-in" },
