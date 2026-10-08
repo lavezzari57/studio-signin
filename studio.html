@@ -186,7 +186,13 @@ td .sub{ display:block; font-size:12.5px; color:var(--soft); line-height:1.2; }
 
 <script>
 /* ---------- settings you can change ---------- */
-const STAFF_PIN = "2026";           // staff code for confirming orientation + export
+const STAFF_PIN = "2115";           // staff code (shared with the hub + every other sheet)
+/* Shared staff session: this sheet reads/writes the SAME unlock the hub uses,
+   so entering the code once anywhere unlocks staff mode here too, and vice
+   versa. The key below must match config.js's STAFF_UNTIL_KEY. */
+const SHARED_STAFF_KEY = "ttc-staff-until";
+function sharedStaffUntil(){ try { return parseInt(localStorage.getItem(SHARED_STAFF_KEY)||"0",10)||0; } catch(e){ return 0; } }
+function setSharedStaff(ms){ try { if(ms) localStorage.setItem(SHARED_STAFF_KEY, String(ms)); else localStorage.removeItem(SHARED_STAFF_KEY); } catch(e){} }
 const CHECKLIST = [
   "Studio rules and signing in",
   "Turning gear on and off safely",
@@ -252,9 +258,9 @@ const pretty = hm => { if(!hm) return ""; let [h,m]=hm.split(":").map(Number); c
 const minutes = (a,b) => { if(!a||!b) return ""; const [h1,m1]=a.split(":").map(Number),[h2,m2]=b.split(":").map(Number); const d=(h2*60+m2)-(h1*60+m1); return d>=0?d:""; };
 const titleName = s => s.trim().replace(/\s+/g," ").replace(/\b\w/g, c=>c.toUpperCase());
 
-let mode = "song", todayCache = [], staffUntil = 0, subDay = dateKey(), online = false, busy = false;
+let mode = "song", todayCache = [], subDay = dateKey(), online = false, busy = false;
 const draft = { song:{}, video:{}, orient:{ steps:[] } };
-const isStaff = () => Date.now() < staffUntil;
+const isStaff = () => Date.now() < sharedStaffUntil();
 
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2600); }
 function setStatus(msg, bad){ $("#status").textContent = msg; $("#status").className = bad ? "status-bad" : ""; }
@@ -415,7 +421,7 @@ function openOrientConfirm(){
     <div class="row"><button data-close>Back</button><button class="pri" id="m-ok">Confirm</button></div>`);
   const go = async () => {
     if($("#m-pin").value !== STAFF_PIN){ $("#m-err").textContent="That code doesn't match. Try again."; return; }
-    staffUntil = Date.now() + 10*60*1000;
+    setSharedStaff(Date.now() + 10*60*1000);
     const rec = { mode:"orient", name:titleName(D.name), date:dateKey(), timeIn:nowHM(),
       stepsDone:[...D.steps].sort((a,b)=>a-b).map(i=>CHECKLIST[i]), stepsMissing:missing, stepsTotal:CHECKLIST.length,
       confirmed:true, confirmedAt:new Date().toISOString() };
@@ -442,7 +448,7 @@ $("#staffBtn").onclick = () => isStaff() ? openStaffPanel() : openStaffLogin();
 function openStaffLogin(){
   openModal(`<h2>Staff</h2><p>Enter the staff code to export, fix rows, or close the studio.</p>${pinFields()}
     <div class="row"><button data-close>Cancel</button><button class="pri" id="m-ok">Open</button></div>`);
-  const go = () => { if($("#m-pin").value !== STAFF_PIN){ $("#m-err").textContent="That code doesn't match. Try again."; return; } staffUntil = Date.now()+10*60*1000; render(); openStaffPanel(); };
+  const go = () => { if($("#m-pin").value !== STAFF_PIN){ $("#m-err").textContent="That code doesn't match. Try again."; return; } setSharedStaff(Date.now()+10*60*1000); render(); openStaffPanel(); };
   $("#m-ok").onclick = go; $("#m-pin").onkeydown = e => { if(e.key==="Enter") go(); };
 }
 
@@ -468,7 +474,7 @@ function openStaffPanel(){
       <button id="x-lock">Lock staff mode</button>
     </div>`, true);
   $("#x-go").onclick = exportXlsx;
-  $("#x-lock").onclick = () => { staffUntil = 0; closeModal(); render(); };
+  $("#x-lock").onclick = () => { setSharedStaff(0); closeModal(); render(); };
   $("#x-close").onclick = async () => {
     const open = todayCache.filter(v=>v.mode!=="orient" && !v.timeOut); const tm = nowHM();
     let ok = 0;

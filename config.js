@@ -17,7 +17,7 @@ window.TTC = (function () {
   const SUPABASE_KEY = "sb_publishable_lHWcaI3grlK7S3XDESF9JA_QOLFfUg7";
 
   /* ---- Staff code. Change it here; takes effect on every sheet. ---- */
-  const STAFF_PIN = "2026";
+  const STAFF_PIN = "2115";
   const STAFF_MINUTES = 10;           // how long staff mode stays unlocked
 
   /* ---- The programs list. THIS is how you add a new sheet. ----
