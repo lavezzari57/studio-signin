@@ -14,7 +14,6 @@
   .lead .ttl h2 em { font-style:normal; display:inline-block; background:var(--ac); color:#fff; border:var(--b); border-radius:.2em; padding:0 .14em .04em; transform:rotate(-2deg); box-shadow:var(--shadow-sticker); }
   .hours { font-family:var(--mono); font-size:13px; color:var(--muted); }
 
-  /* view toggle + month nav */
   .bar2 { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px; }
   .seg { display:inline-flex; border:var(--b); border-radius:999px; overflow:hidden; box-shadow:var(--shadow-sticker-sm); }
   .seg button { font:inherit; font-family:var(--display); font-weight:800; cursor:pointer; border:0; background:var(--paper); color:var(--ink); padding:10px 18px; }
@@ -26,12 +25,10 @@
   .mnav button[disabled]{ opacity:.35; pointer-events:none; }
   .mlabel { font-family:var(--display); font-weight:800; font-size:20px; min-width:150px; text-align:center; }
 
-  /* legend */
   .legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:16px; }
   .lg { display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .dot { width:15px; height:15px; border-radius:5px; border:2px solid var(--ink); }
 
-  /* month grid */
   .grid-wrap { background:var(--paper); border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); overflow:hidden; }
   .dow { display:grid; grid-template-columns:repeat(7,1fr); background:color-mix(in srgb, var(--ac) 16%, var(--paper)); border-bottom:var(--b); }
   .dow span { font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:center; padding:9px 0; }
@@ -44,7 +41,6 @@
   .ev { font-size:11.5px; font-weight:600; line-height:1.15; border:2px solid var(--ink); border-radius:7px; padding:2px 5px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; box-shadow:1.5px 1.5px 0 var(--ink); }
   .more { font-family:var(--mono); font-size:10.5px; color:var(--muted); cursor:pointer; }
 
-  /* list view */
   .list { display:flex; flex-direction:column; gap:14px; }
   .daygroup { background:var(--paper); border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); overflow:hidden; }
   .daygroup h4 { font-family:var(--display); font-weight:800; font-size:17px; margin:0; padding:12px 16px; background:color-mix(in srgb, var(--ac) 14%, var(--paper)); border-bottom:var(--b); }
@@ -55,14 +51,78 @@
   .li .chip { display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; border:2px solid var(--ink); border-radius:999px; padding:1px 8px; margin-left:8px; vertical-align:middle; }
 
   .status { font-family:var(--mono); font-size:12.5px; color:var(--muted); margin:16px 0 0; }
-
-  /* TV mode */
-  body.tv .ttc-topbar, body.tv .bar2, body.tv .legend, body.tv .status { display:none; }
-  body.tv .lead { justify-content:center; text-align:center; }
   .tvbtn { position:fixed; right:16px; bottom:16px; z-index:30; }
 
   h2.modal-h { font-family:var(--display); font-weight:800; letter-spacing:-.02em; margin:0 0 4px; }
   .modal-meta { font-family:var(--mono); font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+  /* =======================================================================
+     TV WALL MODE — fills the screen, big grid + live rail, motion.
+     ======================================================================= */
+  @keyframes omfall { 0%{transform:translate3d(0,-14vh,0) rotate(0)} 100%{transform:translate3d(5vw,114vh,0) rotate(320deg)} }
+  @keyframes omrise { 0%{transform:translate3d(0,112vh,0) scale(1);opacity:0} 18%{opacity:.5} 100%{transform:translate3d(4vw,-12vh,0) scale(.5);opacity:0} }
+  @keyframes tickmove { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  @keyframes cardIn { 0%{opacity:0;transform:translateY(14px) rotate(-1deg)} 100%{opacity:1;transform:translateY(0) rotate(0)} }
+  @keyframes pulseDot { 0%,100%{transform:scale(1)} 50%{transform:scale(1.35)} }
+
+  body.tv { overflow:hidden; height:100vh; }
+  body.tv .ttc-topbar, body.tv .bar2, body.tv .legend, body.tv .status, body.tv .tvbtn { display:none; }
+  body.tv .ttc-wrap { max-width:none; margin:0; padding:0; height:100vh; }
+
+  .tv-stage { display:none; }
+  body.tv .tv-stage { display:grid; grid-template-columns: 62% 38%; height:100vh; position:relative; overflow:hidden; }
+  body.tv #app > *:not(.tv-stage) { display:none; }
+
+  .tv-orn { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .tv-orn i { position:absolute; border-radius:50%; display:block; }
+
+  .tv-left { position:relative; z-index:1; padding:2.6vh 1.6vw 2.2vh 2.4vw; display:flex; flex-direction:column; min-width:0; }
+  .tv-head { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:1.6vh; flex:0 0 auto; }
+  .tv-head .k { font-family:var(--mono); font-size:1.1vh; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); }
+  .tv-head h1 { font-family:var(--display); font-weight:800; font-size:4.6vh; letter-spacing:-.03em; margin:.3vh 0 0; line-height:.95; }
+  .tv-head h1 em { font-style:normal; background:var(--ac); color:#fff; border:var(--b); border-radius:.16em; padding:0 .12em .04em; transform:rotate(-2deg); display:inline-block; box-shadow:var(--shadow-sticker); }
+  .tv-head .clock { text-align:right; font-family:var(--display); font-weight:800; }
+  .tv-head .clock .t { font-size:4.4vh; line-height:1; letter-spacing:-.02em; }
+  .tv-head .clock .d { font-family:var(--mono); font-size:1.3vh; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-top:.4vh; }
+
+  .tv-grid { flex:1 1 auto; display:flex; flex-direction:column; background:var(--paper); border:var(--b); border-radius:1.4vh; box-shadow:var(--shadow-sticker); overflow:hidden; min-height:0; }
+  .tv-dow { display:grid; grid-template-columns:repeat(7,1fr); background:color-mix(in srgb,var(--ac) 16%,var(--paper)); border-bottom:var(--b); }
+  .tv-dow span { font-family:var(--mono); font-size:1.1vh; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); text-align:center; padding:1vh 0; }
+  .tv-cells { flex:1 1 auto; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; min-height:0; }
+  .tv-cell { border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:.7vh .6vw; display:flex; flex-direction:column; gap:.4vh; overflow:hidden; min-width:0; }
+  .tv-cell:nth-child(7n){ border-right:0; }
+  .tv-cell.out { background:repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(30,26,43,.03) 8px,rgba(30,26,43,.03) 16px); }
+  .tv-cell .dn { font-family:var(--display); font-weight:700; font-size:1.5vh; color:var(--muted); }
+  .tv-cell.today { background:color-mix(in srgb,var(--ac) 12%,var(--paper)); }
+  .tv-cell.today .dn { background:var(--ink); color:var(--paper); border-radius:50%; width:3vh; height:3vh; display:grid; place-items:center; font-size:1.5vh; }
+  .tv-ev { font-size:1.15vh; font-weight:700; line-height:1.1; border:2px solid var(--ink); border-radius:.6vh; padding:.2vh .4vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; box-shadow:1px 1px 0 var(--ink); }
+  .tv-more { font-family:var(--mono); font-size:1vh; color:var(--muted); }
+
+  .tv-right { position:relative; z-index:1; background:color-mix(in srgb,var(--ac) 10%,var(--bgc)); border-left:var(--b); padding:2.6vh 1.8vw 0; display:flex; flex-direction:column; min-width:0; overflow:hidden; }
+  .tv-right .sec-k { font-family:var(--mono); font-size:1.2vh; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:.8vh; display:flex; align-items:center; gap:.6vw; }
+  .tv-right .sec-k .live { width:1vh; height:1vh; border-radius:50%; background:var(--ac); border:2px solid var(--ink); animation:pulseDot 1.6s ease-in-out infinite; }
+  .tv-today { flex:0 0 auto; margin-bottom:2vh; }
+  .tv-card { background:var(--paper); border:var(--b); border-radius:1.2vh; box-shadow:var(--shadow-sticker-sm); padding:1.2vh 1.1vw; margin-bottom:1vh; animation:cardIn .5s ease both; }
+  .tv-card .cd-top { display:flex; align-items:center; gap:.6vw; margin-bottom:.4vh; }
+  .tv-card .cd-kind { font-family:var(--mono); font-size:1vh; letter-spacing:.06em; text-transform:uppercase; border:2px solid var(--ink); border-radius:999px; padding:.1vh .5vw; }
+  .tv-card .cd-time { font-family:var(--mono); font-size:1.2vh; color:var(--muted); margin-left:auto; }
+  .tv-card .cd-title { font-family:var(--display); font-weight:800; font-size:2.3vh; line-height:1; letter-spacing:-.02em; }
+  .tv-card .cd-loc { font-family:var(--mono); font-size:1.2vh; color:var(--muted); margin-top:.4vh; }
+  .tv-card.big .cd-title { font-size:2.8vh; }
+  .tv-empty { font-family:var(--display); font-weight:700; font-size:2vh; color:var(--muted); }
+
+  .tv-week { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  .tv-week .scroller { flex:1 1 auto; overflow:hidden; position:relative; }
+  .tv-week .scroll-inner { display:flex; flex-direction:column; gap:1vh; }
+
+  /* bottom ticker crawl */
+  .tv-ticker { position:absolute; left:0; right:0; bottom:0; z-index:3; height:5.2vh; background:var(--ink); color:var(--paper); display:flex; align-items:center; overflow:hidden; border-top:var(--b); }
+  .tv-ticker .tag { flex:0 0 auto; background:var(--ac); color:#fff; font-family:var(--display); font-weight:800; font-size:1.8vh; padding:0 1.2vw; height:100%; display:flex; align-items:center; letter-spacing:.02em; border-right:var(--b); }
+  .tv-ticker .crawl { flex:1 1 auto; overflow:hidden; white-space:nowrap; }
+  .tv-ticker .crawl .run { display:inline-block; white-space:nowrap; animation:tickmove 40s linear infinite; font-family:var(--display); font-weight:700; font-size:1.9vh; padding-left:100%; }
+  .tv-ticker .crawl .run span { margin:0 2.4vw; }
+  .tv-ticker .crawl .run .kdot { display:inline-block; width:1.2vh; height:1.2vh; border-radius:50%; border:2px solid var(--paper); margin-right:.5vw; vertical-align:middle; }
+  body.tv .tv-left, body.tv .tv-right { padding-bottom:6vh; }
 </style>
 </head>
 <body>
@@ -75,13 +135,6 @@
 <script>
 TTCBar.mount("Program Calendar");
 
-/* ============================================================
-   EVENTS — your real program data lives here, baked in.
-   NOTE: for now, edits save only in THIS browser (localStorage),
-   same as your original calendar. The data layer is isolated so
-   this can move to the shared Supabase later without touching
-   the UI. Add/change events between EVENTS:START and EVENTS:END.
-   ============================================================ */
 /* EVENTS:START */
 const EVENTS = [
   { id:"studio-orientation", title:"Studio Orientation", kind:"program", date:"2026-09-01", startTime:"14:00", endTime:"18:30", location:"Studio", blurb:"Learn the studio gear and the rules for using it. Drop in any Tuesday. You need this before you use the studio on your own.", recurrence:{freq:"weekly",weekday:2,until:"2026-10-27"}, skipDates:[] },
@@ -112,22 +165,23 @@ const KINDS = {
   closure:  { label:"Closed",   color:"var(--muted)" }
 };
 
-// ---- data layer (swap this block for Supabase later; UI never changes) ----
 function loadEvents(){
   try{ const s=localStorage.getItem(STORE_KEY); if(s){ const p=JSON.parse(s); if(Array.isArray(p)&&p.length) return p; } }catch(e){}
   return EVENTS;
 }
 let events = loadEvents();
 
-// ---- date helpers ----
 const pad=n=>String(n).padStart(2,"0");
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const fromISO=s=>{ const[y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
 const monthKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
 const pretty=hm=>{ if(!hm)return""; let[h,m]=hm.split(":").map(Number); const ap=h>=12?"pm":"am"; h=h%12||12; return `${h}:${pad(m)}${ap}`; };
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function cssColor(v){ // resolve a var() to a real color for inline SVG/ornaments
+  const t=document.createElement("span"); t.style.color=v; document.body.appendChild(t);
+  const c=getComputedStyle(t).color; t.remove(); return c;
+}
 
-// expand a recurring event into concrete dates within [from,to]
 function occurrences(ev, from, to){
   const out=[];
   const add=dstr=>{ if(dstr>=from && dstr<=to && !(ev.skipDates||[]).includes(dstr)) out.push(Object.assign({}, ev, {date:dstr})); };
@@ -143,24 +197,30 @@ function eventsForMonth(mk){
   const all=[]; events.forEach(ev=>all.push(...occurrences(ev,from,to)));
   return all;
 }
+function eventsForRange(fromD, toD){
+  const from=iso(fromD), to=iso(toD); const all=[];
+  events.forEach(ev=>all.push(...occurrences(ev,from,to)));
+  return all.sort((a,b)=> a.date===b.date ? (a.startTime||"").localeCompare(b.startTime||"") : a.date.localeCompare(b.date));
+}
 
-// ---- state ----
-let view="month"; let month = monthKey(new Date())>=RANGE.start && monthKey(new Date())<=RANGE.end ? monthKey(new Date()) : RANGE.start;
+let view="month";
+let month = monthKey(new Date())>=RANGE.start && monthKey(new Date())<=RANGE.end ? monthKey(new Date()) : RANGE.start;
 const app=document.getElementById("app");
 
 function clampMonth(mk){ return mk<RANGE.start?RANGE.start : mk>RANGE.end?RANGE.end : mk; }
 function shiftMonth(mk,delta){ let[y,m]=mk.split("-").map(Number); m+=delta; if(m<1){m=12;y--;} if(m>12){m=1;y++;} return `${y}-${pad(m)}`; }
 function monthName(mk){ const[y,m]=mk.split("-").map(Number); return new Date(y,m-1,1).toLocaleDateString(undefined,{month:"long",year:"numeric"}); }
 
+/* ---------------- interactive (iPad/laptop) view ---------------- */
 function render(){
+  if(document.body.classList.contains("tv")){ renderTV(); return; }
   const occ = eventsForMonth(month).sort((a,b)=> a.date===b.date ? (a.startTime||"").localeCompare(b.startTime||"") : a.date.localeCompare(b.date));
   app.innerHTML =
     `<div class="lead">
        <div class="ttl"><span class="mono">Kings Highway · Teen Tech Center</span><h2>What's <em>on</em></h2></div>
        <div class="hours">${HOURS}</div>
-     </div>` +
-    (document.body.classList.contains("tv")?"":
-    `<div class="bar2">
+     </div>
+     <div class="bar2">
        <div class="seg">
          <button data-view="month" aria-selected="${view==='month'}">Month</button>
          <button data-view="list" aria-selected="${view==='list'}">List</button>
@@ -172,12 +232,11 @@ function render(){
          <button id="next" ${month>=RANGE.end?'disabled':''}>›</button>
        </div>
      </div>
-     <div class="legend">${Object.entries(KINDS).map(([k,v])=>`<span class="lg"><span class="dot" style="background:${v.color}"></span>${v.label}</span>`).join("")}</div>`) +
+     <div class="legend">${Object.entries(KINDS).map(([k,v])=>`<span class="lg"><span class="dot" style="background:${v.color}"></span>${v.label}</span>`).join("")}</div>` +
     (view==="month"? monthGrid(occ) : listView(occ)) +
     `<p class="status">Edits save in this browser for now. ${events!==EVENTS?"<b>Showing your saved edits.</b>":""}</p>`;
   wire();
 }
-
 function monthGrid(occ){
   const[y,m]=month.split("-").map(Number);
   const first=new Date(y,m-1,1); const startDow=first.getDay(); const days=new Date(y,m,0).getDate();
@@ -186,18 +245,14 @@ function monthGrid(occ){
   let cells="";
   for(let i=0;i<startDow;i++) cells+=`<div class="cell out"></div>`;
   for(let d=1;d<=days;d++){
-    const ds=`${month}-${pad(d)}`; const list=byDay[ds]||[];
-    const shown=list.slice(0,3);
+    const ds=`${month}-${pad(d)}`; const list=byDay[ds]||[]; const shown=list.slice(0,3);
     cells+=`<div class="cell ${ds===todayISO?'today':''}"><span class="dnum">${d}</span>`+
       shown.map(e=>`<span class="ev" data-ev="${e.id}" data-date="${e.date}" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${esc(e.title)}</span>`).join("")+
-      (list.length>3?`<span class="more" data-day="${ds}">+${list.length-3} more</span>`:"")+
-      `</div>`;
+      (list.length>3?`<span class="more" data-day="${ds}">+${list.length-3} more</span>`:"")+`</div>`;
   }
-  const trailing=(7-((startDow+days)%7))%7;
-  for(let i=0;i<trailing;i++) cells+=`<div class="cell out"></div>`;
+  const trailing=(7-((startDow+days)%7))%7; for(let i=0;i<trailing;i++) cells+=`<div class="cell out"></div>`;
   return `<div class="grid-wrap"><div class="dow">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<span>${d}</span>`).join("")}</div><div class="cells">${cells}</div></div>`;
 }
-
 function listView(occ){
   if(!occ.length) return `<div class="daygroup"><div class="li"><div class="body">Nothing scheduled this month.</div></div></div>`;
   const byDay={}; occ.forEach(e=>{ (byDay[e.date]=byDay[e.date]||[]).push(e); });
@@ -210,7 +265,6 @@ function listView(occ){
        </div>`).join("")+`</div>`;
   }).join("")+`</div>`;
 }
-
 function wire(){
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{ view=b.dataset.view; render(); });
   const pv=document.getElementById("prev"); if(pv) pv.onclick=()=>{ month=clampMonth(shiftMonth(month,-1)); render(); };
@@ -218,7 +272,6 @@ function wire(){
   document.querySelectorAll("[data-ev]").forEach(el=>el.onclick=()=>openEvent(el.dataset.ev, el.dataset.date));
   document.querySelectorAll("[data-day]").forEach(el=>el.onclick=()=>{ view="list"; render(); });
 }
-
 function openEvent(id, date){
   const ev=events.find(e=>e.id===id); if(!ev)return;
   const when = ev.startTime? `${pretty(ev.startTime)}${ev.endTime?" – "+pretty(ev.endTime):""}` : "All day";
@@ -232,18 +285,144 @@ function openEvent(id, date){
   );
 }
 
-// TV mode: fullscreen-ish, auto-advance months slowly
-let tvTimer=null;
-document.getElementById("tvbtn").onclick=()=>{
-  document.body.classList.toggle("tv");
-  const on=document.body.classList.contains("tv");
-  document.getElementById("tvbtn").textContent= on? "Exit TV":"TV mode";
-  if(on){ view="month"; tvTimer=setInterval(()=>{ month = month>=RANGE.end?RANGE.start:clampMonth(shiftMonth(month,1)); render(); }, 20000); }
-  else { clearInterval(tvTimer); }
-  render();
-};
+/* ---------------- TV WALL MODE ---------------- */
+let tvClock=null, tvCycle=null, tvMonthHop=null, tvCycleIdx=0;
+
+function renderTV(){
+  const now = new Date();
+  const todayISO = iso(now);
+  // today's events
+  const today = eventsForRange(now, now);
+  // rolling look-ahead: the next 7 days starting tomorrow (never empty mid-week)
+  const tomorrow = new Date(now.getTime()+86400000);
+  const lookEnd = new Date(now.getTime()+7*86400000);
+  const week = eventsForRange(tomorrow, lookEnd);
+
+  app.insertAdjacentHTML("afterbegin","");
+  // build once; keep the stage and just refresh dynamic bits on cycles
+  app.innerHTML = `
+    <div class="tv-stage">
+      <div class="tv-orn" id="tvOrn"></div>
+      <div class="tv-left">
+        <div class="tv-head">
+          <div>
+            <div class="k">Kings Highway · Teen Tech Center</div>
+            <h1>What's <em>on</em></h1>
+          </div>
+          <div class="clock"><div class="t" id="tvTime"></div><div class="d" id="tvDate"></div></div>
+        </div>
+        ${tvGrid(todayISO)}
+      </div>
+      <div class="tv-right">
+        <div class="tv-today">
+          <div class="sec-k"><span class="live"></span> Today</div>
+          <div id="tvTodayCards">${tvTodayCards(today)}</div>
+        </div>
+        <div class="tv-week">
+          <div class="sec-k">Coming up next</div>
+          <div class="scroller"><div class="scroll-inner" id="tvWeek">${tvWeekCards(week)}</div></div>
+        </div>
+      </div>
+      ${tvTicker(week.length?week:today)}
+    </div>`;
+  paintClock();
+  spawnOrnaments();
+  startTVTimers(today, week);
+}
+
+function tvGrid(todayISO){
+  const mk = monthKey(new Date())>=RANGE.start && monthKey(new Date())<=RANGE.end ? monthKey(new Date()) : month;
+  const[y,m]=mk.split("-").map(Number);
+  const startDow=new Date(y,m-1,1).getDay(); const days=new Date(y,m,0).getDate();
+  const occ=eventsForMonth(mk); const byDay={}; occ.forEach(e=>{ (byDay[e.date]=byDay[e.date]||[]).push(e); });
+  let cells="";
+  for(let i=0;i<startDow;i++) cells+=`<div class="tv-cell out"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${mk}-${pad(d)}`; const list=byDay[ds]||[]; const shown=list.slice(0,3);
+    cells+=`<div class="tv-cell ${ds===todayISO?'today':''}"><span class="dn">${d}</span>`+
+      shown.map(e=>`<span class="tv-ev" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${esc(e.title)}</span>`).join("")+
+      (list.length>3?`<span class="tv-more">+${list.length-3}</span>`:"")+`</div>`;
+  }
+  const trailing=(7-((startDow+days)%7))%7; for(let i=0;i<trailing;i++) cells+=`<div class="tv-cell out"></div>`;
+  return `<div class="tv-grid"><div class="tv-dow">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<span>${d}</span>`).join("")}</div><div class="tv-cells">${cells}</div></div>`;
+}
+function card(e, big){
+  const when = e.startTime? `${pretty(e.startTime)}${e.endTime?"–"+pretty(e.endTime):""}` : "All day";
+  return `<div class="tv-card ${big?'big':''}">
+    <div class="cd-top"><span class="cd-kind" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${KINDS[e.kind].label}</span><span class="cd-time">${when}</span></div>
+    <div class="cd-title">${esc(e.title)}</div>
+    <div class="cd-loc">${esc(e.location||"")}</div>
+  </div>`;
+}
+function tvTodayCards(today){
+  if(!today.length) return `<div class="tv-empty">Open hours only today — no scheduled programs.</div>`;
+  return today.map(e=>card(e,true)).join("");
+}
+function tvWeekCards(week){
+  if(!week.length) return `<div class="tv-empty" style="font-size:1.6vh">Nothing else scheduled in the next week — the center is still open during the hours shown.</div>`;
+  const byDay={}; week.forEach(e=>{ (byDay[e.date]=byDay[e.date]||[]).push(e); });
+  return Object.keys(byDay).sort().map(ds=>{
+    const dl=fromISO(ds).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
+    return `<div><div class="sec-k" style="margin:.4vh 0 .6vh;font-size:1.1vh">${dl}</div>${byDay[ds].map(e=>card(e,false)).join("")}</div>`;
+  }).join("");
+}
+function tvTicker(list){
+  const items = list.length? list : eventsForRange(new Date(), new Date(new Date().getTime()+13*86400000));
+  const run = items.map(e=>{
+    const d=fromISO(e.date).toLocaleDateString(undefined,{weekday:"short"});
+    const t=e.startTime?pretty(e.startTime):"all day";
+    return `<span><span class="kdot" style="background:${KINDS[e.kind].color}"></span>${esc(e.title)} · ${d} ${t}${e.location?" · "+esc(e.location):""}</span>`;
+  }).join("");
+  return `<div class="tv-ticker"><div class="tag">Coming up</div><div class="crawl"><div class="run">${run}${run}</div></div></div>`;
+}
+
+function paintClock(){
+  const now=new Date();
+  const tEl=document.getElementById("tvTime"), dEl=document.getElementById("tvDate");
+  if(tEl) tEl.textContent = now.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+  if(dEl) dEl.textContent = now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+}
+function spawnOrnaments(){
+  const orn=document.getElementById("tvOrn"); if(!orn)return; orn.innerHTML="";
+  const cols=[KINDS.program.color,KINDS.event.color,KINDS.deadline.color,"var(--ac)"];
+  for(let i=0;i<10;i++){
+    const el=document.createElement("i");
+    const size=4+Math.random()*9; // vw
+    const rise=Math.random()>.5;
+    el.style.width=size+"vw"; el.style.height=size+"vw";
+    el.style.left=(Math.random()*90)+"%";
+    el.style.background=cssColor(cols[i%cols.length]);
+    el.style.opacity=(0.1+Math.random()*0.16).toFixed(2);
+    const dur=(18+Math.random()*26).toFixed(1);
+    el.style.animation=`${rise?'omrise':'omfall'} ${dur}s linear ${(-Math.random()*20).toFixed(1)}s infinite`;
+    orn.appendChild(el);
+  }
+}
+function startTVTimers(today, week){
+  clearInterval(tvClock); clearInterval(tvCycle); clearInterval(tvMonthHop);
+  tvClock = setInterval(paintClock, 1000*20);
+  // gentle "card flip": re-trigger the cardIn animation on today's cards every 7s
+  tvCycle = setInterval(()=>{
+    const cards=document.querySelectorAll("#tvTodayCards .tv-card");
+    if(!cards.length) return;
+    tvCycleIdx=(tvCycleIdx+1)%cards.length;
+    const c=cards[tvCycleIdx]; c.style.animation="none"; void c.offsetWidth; c.style.animation="cardIn .55s ease both";
+  }, 7000);
+  // full refresh every 10 min so "today/this week" stays correct as time passes
+  tvMonthHop = setInterval(()=>{ if(document.body.classList.contains("tv")) renderTV(); }, 10*60*1000);
+}
+function stopTVTimers(){ clearInterval(tvClock); clearInterval(tvCycle); clearInterval(tvMonthHop); }
+
+/* enter/exit */
+function enterTV(){ document.body.classList.add("tv"); document.getElementById("tvbtn").textContent="Exit TV"; renderTV(); }
+function exitTV(){ document.body.classList.remove("tv"); stopTVTimers(); document.getElementById("tvbtn").textContent="TV mode"; render(); }
+document.getElementById("tvbtn").onclick=()=>{ document.body.classList.contains("tv")?exitTV():enterTV(); };
+// double-tap/click anywhere in TV to exit (no visible chrome on the wall)
+document.addEventListener("dblclick",()=>{ if(document.body.classList.contains("tv")) exitTV(); });
 
 render();
+// auto-enter TV mode via ?tv  (point the library TV at .../calendar.html?tv)
+if(/[?&]tv\b/.test(location.search)) enterTV();
 </script>
 </body>
 </html>
