@@ -72,18 +72,24 @@ uses its own table:
 
 - studio → `visits`
 - FTC → `ftc_visits`
+- calendar → `calendar_events`
 - a new sheet → make it a new table (keep the same shape: a `date` column,
   `time_in` / `time_out`, and whatever fields that program needs).
 
 The connection and the staff code are in `config.js` — change them there,
 once, and every sheet follows.
 
+### The calendar is live on the database
+
+Events live in the `calendar_events` table, so **adding/editing events works
+on every device at once** (laptop, iPad, the TV wall). In staff mode the
+calendar shows a **"+ Add event"** button, and tapping any event lets you
+**edit or remove** it. Editing/removing a repeating event asks "just this
+day, or the whole series." The `EVENTS` block still in `calendar.html` is
+only a fallback shown if the database is briefly unreachable.
+
 ### Still to do (known, on purpose)
 
-- **Calendar is not on the database yet.** Its events are baked into
-  `calendar.html` and any edits save only in that one browser (same as the
-  original). The data layer is isolated (`loadEvents()` / the `EVENTS`
-  block) so it can move to Supabase later without touching the UI.
 - **The studio sheet has its own staff code** (`2026`, built into
   `studio.html`). The hub's shared unlock doesn't carry into it yet. One
   small bridge line would connect them whenever you want.

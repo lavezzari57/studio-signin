@@ -165,11 +165,32 @@ const KINDS = {
   closure:  { label:"Closed",   color:"var(--muted)" }
 };
 
-function loadEvents(){
-  try{ const s=localStorage.getItem(STORE_KEY); if(s){ const p=JSON.parse(s); if(Array.isArray(p)&&p.length) return p; } }catch(e){}
-  return EVENTS;
+const TABLE = "calendar_events";
+// map a DB row -> the event shape the UI uses
+function fromRow(r){
+  return { id:r.id, title:r.title, kind:r.kind, date:r.date, startTime:r.start_time, endTime:r.end_time,
+    location:r.location, blurb:r.blurb,
+    recurrence: r.rec_freq ? { freq:r.rec_freq, weekday:r.rec_weekday, until:r.rec_until } : null,
+    skipDates: r.skip_dates || [] };
 }
-let events = loadEvents();
+// map the UI shape -> a DB row
+function toRow(e){
+  return { title:e.title, kind:e.kind, date:e.date, start_time:e.startTime||null, end_time:e.endTime||null,
+    location:e.location||null, blurb:e.blurb||null,
+    rec_freq: e.recurrence?e.recurrence.freq:null, rec_weekday: e.recurrence?e.recurrence.weekday:null,
+    rec_until: e.recurrence?e.recurrence.until:null, skip_dates: e.skipDates||[] };
+}
+// Start with the baked-in events so the wall shows SOMETHING if the DB is briefly
+// unreachable; replaced by live rows as soon as the first fetch returns.
+let events = EVENTS;
+let online = false;
+async function fetchEvents(){
+  try{
+    const rows = await TTC.select(TABLE, "order=date.asc");
+    events = rows.map(fromRow);
+    online = true;
+  }catch(e){ online = false; }
+}
 
 const pad=n=>String(n).padStart(2,"0");
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -234,7 +255,8 @@ function render(){
      </div>
      <div class="legend">${Object.entries(KINDS).map(([k,v])=>`<span class="lg"><span class="dot" style="background:${v.color}"></span>${v.label}</span>`).join("")}</div>` +
     (view==="month"? monthGrid(occ) : listView(occ)) +
-    `<p class="status">Edits save in this browser for now. ${events!==EVENTS?"<b>Showing your saved edits.</b>":""}</p>`;
+    (TTC.isStaff()? `<div style="margin-top:16px"><button class="ttc-btn ttc-btn-primary" id="addEv">+ Add event</button></div>` : "") +
+    `<p class="status ${online?'':'bad'}">${online?'Live — synced with the center.':'Connecting…'} ${TTC.isStaff()?'Staff mode: tap an event to edit or remove it.':''}</p>`;
   wire();
 }
 function monthGrid(occ){
@@ -271,19 +293,125 @@ function wire(){
   const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{ month=clampMonth(shiftMonth(month,1)); render(); };
   document.querySelectorAll("[data-ev]").forEach(el=>el.onclick=()=>openEvent(el.dataset.ev, el.dataset.date));
   document.querySelectorAll("[data-day]").forEach(el=>el.onclick=()=>{ view="list"; render(); });
+  const add=document.getElementById("addEv"); if(add) add.onclick=()=>openEditor(null);
 }
 function openEvent(id, date){
   const ev=events.find(e=>e.id===id); if(!ev)return;
   const when = ev.startTime? `${pretty(ev.startTime)}${ev.endTime?" – "+pretty(ev.endTime):""}` : "All day";
   const dstr = fromISO(date||ev.date).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  const staffBtns = TTC.isStaff()
+    ? `<div style="display:flex;gap:10px;margin-bottom:8px">
+         <button class="ttc-btn" id="ev-edit" style="flex:1">Edit</button>
+         <button class="ttc-btn ttc-btn-danger" id="ev-del" style="flex:1">Remove</button>
+       </div>` : "";
   TTCBar.modal(
     `<div class="modal-meta">${KINDS[ev.kind].label} · ${esc(ev.location||"")}</div>
      <h2 class="modal-h">${esc(ev.title)}</h2>
-     <div class="modal-meta" style="margin-bottom:10px">${dstr} · ${when}</div>
+     <div class="modal-meta" style="margin-bottom:10px">${dstr} · ${when}${ev.recurrence?" · repeats":""}</div>
      <p style="margin:0 0 14px;line-height:1.5">${esc(ev.blurb||"")}</p>
-     <button class="ttc-btn" data-close style="width:100%">Close</button>`
+     ${staffBtns}
+     <button class="ttc-btn" data-close style="width:100%">Close</button>`,
+    () => {
+      const ed=document.getElementById("ev-edit"); if(ed) ed.onclick=()=>openEditor(ev, date);
+      const dl=document.getElementById("ev-del"); if(dl) dl.onclick=()=>confirmDelete(ev, date);
+    }
   );
 }
+
+/* ---- add / edit form (staff) ---- */
+function openEditor(ev, occDate){
+  const isNew=!ev; const e = ev || { kind:"program", date:iso(new Date()), location:"Teen Tech Center", skipDates:[] };
+  const rep = !!e.recurrence;
+  TTCBar.modal(
+    `<h2 class="modal-h">${isNew?"Add event":"Edit event"}</h2>
+     <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;max-height:64vh;overflow:auto">
+       <label class="ef"><span>Title</span><input id="e-title" type="text" value="${esc(e.title||"")}" placeholder="e.g. Open Mic Night"></label>
+       <label class="ef"><span>Type</span>
+         <select id="e-kind">${Object.entries(KINDS).map(([k,v])=>`<option value="${k}" ${e.kind===k?"selected":""}>${v.label}</option>`).join("")}</select></label>
+       <label class="ef"><span>Date</span><input id="e-date" type="date" value="${esc(e.date||"")}"></label>
+       <div style="display:flex;gap:10px">
+         <label class="ef" style="flex:1"><span>Start</span><input id="e-start" type="time" value="${esc(e.startTime||"")}"></label>
+         <label class="ef" style="flex:1"><span>End</span><input id="e-end" type="time" value="${esc(e.endTime||"")}"></label>
+       </div>
+       <div class="modal-meta" style="margin-top:-6px">Leave times blank for an all-day item (deadlines, closures).</div>
+       <label class="ef"><span>Location</span><input id="e-loc" type="text" value="${esc(e.location||"")}"></label>
+       <label class="ef"><span>Details</span><textarea id="e-blurb" rows="2" placeholder="one or two sentences">${esc(e.blurb||"")}</textarea></label>
+       <label style="display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer">
+         <input type="checkbox" id="e-rep" ${rep?"checked":""} style="width:24px;height:24px"> Repeats weekly
+       </label>
+       <div id="e-repbox" style="${rep?"":"display:none"};display:flex;gap:10px">
+         <label class="ef" style="flex:1"><span>Every</span>
+           <select id="e-freq"><option value="weekly" ${e.recurrence?.freq==="weekly"?"selected":""}>Week</option><option value="biweekly" ${e.recurrence?.freq==="biweekly"?"selected":""}>Other week</option></select></label>
+         <label class="ef" style="flex:1"><span>Until</span><input id="e-until" type="date" value="${esc(e.recurrence?.until||"")}"></label>
+       </div>
+       <div class="err" id="e-err" style="color:var(--bad);font-size:14px;min-height:18px"></div>
+     </div>
+     <div style="display:flex;gap:10px;margin-top:12px">
+       <button class="ttc-btn" data-close style="flex:1">Cancel</button>
+       <button class="ttc-btn ttc-btn-primary" id="e-save" style="flex:1">${isNew?"Add it":"Save"}</button>
+     </div>`,
+    () => {
+      // inject label styling once
+      if(!document.getElementById("ef-style")){ const s=document.createElement("style"); s.id="ef-style";
+        s.textContent=".ef{display:flex;flex-direction:column;gap:6px}.ef>span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.ef input,.ef select,.ef textarea{font:inherit;min-height:46px;padding:8px 12px;border:var(--b);border-radius:var(--radius-sm);background:#fff;color:var(--ink)}"; document.head.appendChild(s); }
+      document.getElementById("e-rep").onchange=ev2=>{ document.getElementById("e-repbox").style.display = ev2.target.checked?"flex":"none"; };
+      document.getElementById("e-save").onclick=()=>saveEditor(ev, occDate);
+    }
+  );
+}
+
+async function saveEditor(orig, occDate){
+  const g=id=>document.getElementById(id);
+  const title=g("e-title").value.trim();
+  const date=g("e-date").value;
+  if(!title){ g("e-err").textContent="Give it a title."; return; }
+  if(!date){ g("e-err").textContent="Pick a date."; return; }
+  const repeats=g("e-rep").checked;
+  const rec = repeats ? { freq:g("e-freq").value, weekday:fromISO(date).getDay(), until:g("e-until").value||null } : null;
+  const payload = {
+    title, kind:g("e-kind").value, date,
+    startTime:g("e-start").value||null, endTime:g("e-end").value||null,
+    location:g("e-loc").value.trim()||null, blurb:g("e-blurb").value.trim()||null,
+    recurrence: rec, skipDates: orig?.skipDates || []
+  };
+  g("e-save").disabled=true; g("e-err").textContent="Saving…";
+  try{
+    if(orig){ await TTC.update(TABLE, orig.id, toRow(payload)); }
+    else { await TTC.insert(TABLE, toRow(payload)); }
+    await fetchEvents(); TTCBar.closeModal(); refreshView(); TTC.toast(orig?"Saved.":"Added to the calendar.");
+  }catch(e){ g("e-err").textContent="Couldn't save — check the WiFi."; g("e-save").disabled=false; }
+}
+
+function confirmDelete(ev, occDate){
+  const recurring = !!ev.recurrence;
+  TTCBar.modal(
+    `<h2 class="modal-h">Remove "${esc(ev.title)}"?</h2>` +
+    (recurring
+      ? `<p style="margin:6px 0 14px">This one repeats. Remove just this day (${fromISO(occDate||ev.date).toLocaleDateString(undefined,{month:"short",day:"numeric"})}), or the whole series?</p>
+         <div style="display:flex;flex-direction:column;gap:10px">
+           <button class="ttc-btn" id="del-one" style="width:100%">Just this day</button>
+           <button class="ttc-btn ttc-btn-danger" id="del-all" style="width:100%">The whole series</button>
+           <button class="ttc-btn" data-close style="width:100%">Cancel</button>
+         </div>`
+      : `<p style="margin:6px 0 14px">This can't be undone.</p>
+         <div style="display:flex;gap:10px">
+           <button class="ttc-btn" data-close style="flex:1">Cancel</button>
+           <button class="ttc-btn ttc-btn-danger" id="del-all" style="flex:1">Remove it</button>
+         </div>`),
+    () => {
+      const one=document.getElementById("del-one");
+      if(one) one.onclick=async()=>{ // add this occurrence to skip_dates
+        const skips=(ev.skipDates||[]).concat([occDate||ev.date]);
+        try{ await TTC.update(TABLE, ev.id, { skip_dates:skips }); await fetchEvents(); TTCBar.closeModal(); refreshView(); TTC.toast("Removed that day."); }
+        catch(e){ TTC.toast("Couldn't remove it."); }
+      };
+      const all=document.getElementById("del-all");
+      if(all) all.onclick=async()=>{ try{ await TTC.remove(TABLE, ev.id); await fetchEvents(); TTCBar.closeModal(); refreshView(); TTC.toast("Removed."); } catch(e){ TTC.toast("Couldn't remove it."); } };
+    }
+  );
+}
+
+function refreshView(){ if(document.body.classList.contains("tv")) renderTV(); else render(); }
 
 /* ---------------- TV WALL MODE ---------------- */
 let tvClock=null, tvCycle=null, tvMonthHop=null, tvCycleIdx=0;
@@ -420,9 +548,22 @@ document.getElementById("tvbtn").onclick=()=>{ document.body.classList.contains(
 // double-tap/click anywhere in TV to exit (no visible chrome on the wall)
 document.addEventListener("dblclick",()=>{ if(document.body.classList.contains("tv")) exitTV(); });
 
+// first paint from baked-in events, then load the live ones
 render();
-// auto-enter TV mode via ?tv  (point the library TV at .../calendar.html?tv)
-if(/[?&]tv\b/.test(location.search)) enterTV();
+const wantTV = /[?&]tv\b/.test(location.search);
+if(wantTV) enterTV();
+fetchEvents().then(()=>refreshView());
+
+// live sync: re-pull from the DB periodically so adds/edits on another device show up.
+// TV polls faster (it's a passive wall display); interactive view polls gently and
+// skips while a modal/editor is open so it doesn't yank the form away.
+setInterval(async ()=>{
+  if(document.querySelector(".ttc-scrim")) return;        // editor open
+  await fetchEvents(); refreshView();
+}, 30000);
+
+// re-render when staff mode flips (so the + Add event button + edit affordances appear)
+TTCBar.onStaffChange(()=>refreshView());
 </script>
 </body>
 </html>
