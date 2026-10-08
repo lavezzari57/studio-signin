@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Art Studio — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  :root{ --bgc:#ffe0ee; --ac:#ff54a0; --stripe:#ff54a0; }
+  .lead { margin: 4px 0 18px; }
+  .lead h2 { font-family:var(--display); font-weight:800; font-size:clamp(40px,9vw,72px); line-height:.9; letter-spacing:-.035em; margin:6px 0 10px; }
+  .lead h2 em { font-style:normal; display:inline-block; background:var(--ac); color:#fff; border:var(--b); border-radius:.2em; padding:0 .14em .04em; transform:rotate(-2deg); box-shadow:var(--shadow-sticker); }
+  .here { display:inline-flex; align-items:baseline; gap:10px; font-family:var(--mono); color:var(--muted); font-size:14px; }
+  .here b { font-family:var(--display); font-size:22px; color:var(--ink); }
+  .form { padding: 22px 22px 24px; display:flex; flex-direction:column; gap:18px; }
+  .form.card { border-top: 10px solid var(--stripe); }
+  .names { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:620px){ .names{ grid-template-columns:1fr; } }
+  .field { display:flex; flex-direction:column; gap:7px; }
+  .field label, .fl { font-family:var(--mono); font-size:12.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+  input[type=text], input[type=time], textarea {
+    font:inherit; min-height:var(--tap); padding:12px 16px; border:var(--b); border-radius:var(--radius-sm);
+    background:#fff; color:var(--ink); box-shadow:var(--shadow-sticker-sm); resize:vertical;
+  }
+  input:focus, textarea:focus { outline:none; box-shadow:4px 4px 0 var(--stripe); }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .chip {
+    font:inherit; font-weight:600; cursor:pointer; padding:11px 16px; border:var(--b); border-radius:999px;
+    background:#fff; color:var(--ink); box-shadow:var(--shadow-sticker-sm); transition:transform .05s, box-shadow .05s;
+  }
+  .chip:active { transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
+  .chip[aria-pressed="true"] { background:var(--ac); color:#fff; }
+  .go { width:100%; }
+  .sheet { margin-top: 26px; }
+  .sheet h3 { font-family:var(--display); font-weight:800; font-size:24px; letter-spacing:-.02em; margin:0 0 10px; }
+  table { width:100%; border-collapse:separate; border-spacing:0; background:var(--paper); border:var(--b); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sticker); }
+  th { font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); text-align:left; padding:12px 14px; background:color-mix(in srgb, var(--stripe) 14%, var(--paper)); border-bottom:var(--b); }
+  td { padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  .nm { font-weight:700; }
+  .del { font:inherit; font-size:12px; font-weight:700; cursor:pointer; margin-left:8px; color:var(--bad); background:none; border:0; text-decoration:underline; }
+  .muted-row td { color:var(--muted); }
+  .status { font-family:var(--mono); font-size:12.5px; color:var(--muted); margin: 14px 0 0; }
+  .status.bad { color:var(--bad); }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<div class="ttc-wrap" id="app"></div>
+<script>
+TTCBar.mount("Art Studio");
+const TABLE = "art_visits";
+const MULTI = ["Drawing","Painting","Digital","Sculpture","Other"];
+const MULTI_KEY = "medium";   // db column for the multi-select
+const PROJ_KEY = "project";     // db column for the project/show field
+
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const dateKey = (d=new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const nowHM = () => { const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const pretty = hm => { if(!hm)return""; let[h,m]=hm.split(":").map(Number); const ap=h>=12?"pm":"am"; h=h%12||12; return `${h}:${pad(m)}${ap}`; };
+const titleName = s => s.trim().replace(/\s+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+
+let todayCache=[], online=false, busy=false;
+const draft = { multi:[] };
+const app = document.getElementById("app");
+const isStaff = () => TTC.isStaff();
+
+const fromApi = r => ({ id:r.id, first:r.first_name, last:r.last_name, date:r.date, timeIn:r.time_in, timeOut:r.time_out,
+  multi:r[MULTI_KEY]||[], proj:r[PROJ_KEY], notes:r.notes, createdAt:r.created_at });
+
+function render(){
+  const here = todayCache.filter(v=>!v.timeOut).length;
+  app.innerHTML = `
+    <div class="lead">
+      <span class="mono">Kings Highway · Art Studio</span>
+      <h2>Sign in to <em>art</em></h2>
+      <span class="here"><b>${here}</b> making art right now</span>
+    </div>
+    <section class="card form">
+      <div class="names">
+        <div class="field"><label>first name</label><input type="text" id="f-first" autocomplete="off" autocapitalize="words" placeholder="first" value="${esc(draft.first||"")}"></div>
+        <div class="field"><label>last name</label><input type="text" id="f-last" autocomplete="off" autocapitalize="words" placeholder="last" value="${esc(draft.last||"")}"></div>
+      </div>
+      <div class="field"><label>project / piece</label><input type="text" id="f-proj" autocomplete="off" placeholder="what are you working on?" value="${esc(draft.proj||"")}"></div>
+      <div class="field"><span class="fl">what are you working in</span>
+        <div class="chips">${MULTI.map(w=>`<button type="button" class="chip" data-w="${esc(w)}" aria-pressed="${draft.multi.includes(w)}">${esc(w)}</button>`).join("")}</div>
+      </div>
+      <div class="field"><label>time in</label><input type="time" id="f-in" value="${esc(draft.timeIn||nowHM())}"></div>
+      <div class="field"><label>notes (optional)</label><textarea id="f-notes" rows="2" placeholder="anything to flag?">${esc(draft.notes||"")}</textarea></div>
+      <button class="ttc-btn ttc-btn-primary go" id="goBtn" ${(!draft.first?.trim()||!draft.last?.trim()||busy)?"disabled":""}>Sign in</button>
+    </section>
+    <div class="sheet"><h3>Here today</h3>
+      <table><thead><tr><th style="width:30%">name</th><th>project / piece</th><th>what are you working in</th><th>in</th><th>out</th></tr></thead><tbody>
+      ${(()=>{ const rows=todayCache.slice().sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
+        return rows.length? rows.map(v=>`<tr><td class="nm">${esc(v.first)} ${esc(v.last)}${isStaff()?` <button class="del" data-del="${v.id}">remove</button>`:""}</td><td>${esc(v.proj||"")}</td><td>${(v.multi||[]).join(", ")}</td><td>${pretty(v.timeIn)}</td><td>${v.timeOut?pretty(v.timeOut):(isStaff()?`<button class="del" data-out="${v.id}">sign out</button>`:"—")}</td></tr>`).join("")
+          : `<tr class="muted-row"><td colspan="5">Nobody signed in yet today.</td></tr>`; })()}
+      </tbody></table>
+    </div>
+    <p class="status ${online?'':'bad'}" id="status">${online?'Live — synced.':'Connecting…'}</p>`;
+  wire();
+}
+function wire(){
+  const f=document.getElementById("f-first"); if(f) f.oninput=e=>{draft.first=e.target.value; tg();};
+  const l=document.getElementById("f-last"); if(l) l.oninput=e=>{draft.last=e.target.value; tg();};
+  const pr=document.getElementById("f-proj"); if(pr) pr.oninput=e=>{draft.proj=e.target.value;};
+  const tin=document.getElementById("f-in"); if(tin) tin.oninput=e=>{draft.timeIn=e.target.value;};
+  const nt=document.getElementById("f-notes"); if(nt) nt.oninput=e=>{draft.notes=e.target.value;};
+  document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ const w=c.dataset.w; const i=draft.multi.indexOf(w); i<0?draft.multi.push(w):draft.multi.splice(i,1); c.setAttribute("aria-pressed", draft.multi.includes(w)); });
+  const go=document.getElementById("goBtn"); if(go) go.onclick=submit;
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>removeRow(b.dataset.del));
+  document.querySelectorAll("[data-out]").forEach(b=>b.onclick=()=>signOut(b.dataset.out));
+}
+function tg(){ const go=document.getElementById("goBtn"); if(go) go.disabled = !draft.first?.trim()||!draft.last?.trim()||busy; }
+async function submit(){
+  busy=true; tg();
+  try{
+    const row = { first_name:titleName(draft.first), last_name:titleName(draft.last), date:dateKey(), time_in:draft.timeIn||nowHM(), notes:(draft.notes||"").trim()||null };
+    row[MULTI_KEY]=draft.multi; row[PROJ_KEY]=(draft.proj||"").trim()||null;
+    const saved = fromApi(await TTC.insert(TABLE, row));
+    todayCache.push(saved);
+    draft.first=""; draft.last=""; draft.proj=""; draft.multi=[]; draft.notes=""; draft.timeIn="";
+    TTC.toast("Signed in. Go make something.");
+    render();
+  }catch(e){ TTC.toast("Couldn't save — check the WiFi and try again."); }
+  busy=false; tg();
+}
+async function removeRow(id){ if(!isStaff())return; try{ await TTC.remove(TABLE,id); todayCache=todayCache.filter(v=>v.id!==id); render(); TTC.toast("Removed."); }catch(e){ TTC.toast("Couldn't remove it."); } }
+async function signOut(id){ if(!isStaff())return; const tm=nowHM(); try{ await TTC.update(TABLE,id,{time_out:tm,signed_out_at:new Date().toISOString()}); const v=todayCache.find(x=>x.id===id); if(v)v.timeOut=tm; render(); TTC.toast("Signed out."); }catch(e){ TTC.toast("Couldn't sign out."); } }
+async function refresh(){
+  try{ const rows = await TTC.select(TABLE, `date=eq.${dateKey()}&order=created_at.asc`); todayCache = rows.map(fromApi); online=true; if(!document.querySelector(".ttc-scrim")) render(); }
+  catch(e){ online=false; const st=document.getElementById("status"); if(st){st.textContent="Can't reach the list — check the WiFi."; st.className="status bad";} }
+}
+TTCBar.onStaffChange(()=>render());
+render(); refresh();
+setInterval(()=>{ const a=document.activeElement; const typing=a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"); if(!typing && !document.querySelector(".ttc-scrim")) refresh(); }, 8000);
+</script>
+</body>
+</html>

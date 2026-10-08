@@ -30,9 +30,9 @@ window.TTC = (function () {
     { id:"studio",      name:"Music Studio",   file:"studio.html",   color:"var(--lav)",  emoji:"🎙️", blurb:"Song + music video sign-in" },
     { id:"ftc",         name:"FTC Robotics",   file:"ftc.html",      color:"var(--mint)", emoji:"🤖", blurb:"Robotics team sign-in" },
     { id:"calendar",    name:"Program Calendar", file:"calendar.html", color:"var(--yel)", emoji:"🗓️", blurb:"What's on, and when" },
-    { id:"podcasting",  name:"Podcasting",     file:null,            color:"var(--sal)",  emoji:"🎧", blurb:"Coming soon" },
-    { id:"printer",     name:"3D Printer",     file:null,            color:"var(--lav)",  emoji:"🖨️", blurb:"Coming soon" },
-    { id:"art",         name:"Art Studio",     file:null,            color:"var(--mint)", emoji:"🎨", blurb:"Coming soon" },
+    { id:"podcasting",  name:"Podcasting",     file:"podcasting.html", color:"var(--lav)",  emoji:"🎧", blurb:"Podcast booth sign-in" },
+    { id:"printer",     name:"3D Printer",     file:"printer.html",    color:"var(--sal)",  emoji:"🖨️", blurb:"Maker bench sign-in" },
+    { id:"art",         name:"Art Studio",     file:"art.html",        color:"var(--ac)",   emoji:"🎨", blurb:"Art studio sign-in" },
   ];
 
   /* =======================================================================
