@@ -72,12 +72,27 @@ uses its own table:
 
 - studio → `visits`
 - FTC → `ftc_visits`
+- podcasting → `podcast_visits`, 3D printer → `printer_visits`, art → `art_visits`
 - calendar → `calendar_events`
+- generated event sheets → `event_sheets` (definitions) + `event_signins` (rows)
 - a new sheet → make it a new table (keep the same shape: a `date` column,
   `time_in` / `time_out`, and whatever fields that program needs).
 
 The connection and the staff code are in `config.js` — change them there,
 once, and every sheet follows.
+
+### Make an event sign-in sheet yourself — no code
+
+On the hub in staff mode there's a **"+ New sign-in sheet"** tile. Type an
+event name, pick a color, optionally type one question to ask (e.g. "Which
+school are you from?"), hit **Make it** — and a live sign-in sheet exists
+instantly, as a tile on the hub, on the same database. Use it, and next time
+that event happens the tile's already there. Staff can remove a generated
+tile with the ✕ on it (the sign-ins people did stay in the database).
+
+These generated sheets are NOT files — they're rows in `event_sheets`, and a
+single smart page (`event.html?id=<sheet id>`) renders any of them. All their
+sign-ins live in `event_signins`, tagged by `sheet_id`.
 
 ### The calendar is live on the database
 

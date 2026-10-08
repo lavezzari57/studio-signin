@@ -37,6 +37,16 @@
   .pill { align-self:flex-start; font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
           color:var(--muted); background:var(--bgc); border:2px solid var(--ink); border-radius:999px; padding:3px 10px; }
   .pill.guide { color:var(--ink); background:var(--sky); }
+  .pill.event { color:var(--ink); background:var(--sal); }
+
+  /* the + New sheet tile */
+  .tile-add { font:inherit; text-align:left; align-items:flex-start; background:var(--paper); border-style:dashed; cursor:pointer; }
+  .tile-add .plus { width:66px; height:66px; border-radius:16px; border:2.5px dashed var(--ink); display:grid; place-items:center; font-family:var(--display); font-weight:800; font-size:40px; line-height:1; color:var(--ink); }
+  .tile-add .name { margin-top:14px; }
+
+  /* delete ✕ on a generated tile (staff) */
+  .tile-del { position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%; border:2px solid var(--ink); background:var(--paper); color:var(--bad); font-weight:800; font-size:14px; cursor:pointer; line-height:1; box-shadow:2px 2px 0 var(--ink); }
+  .tile-del:active { transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
 
   .staffnote { margin:26px 2px 0; font-family:var(--mono); font-size:13px; color:var(--muted); }
   .brandrow { display:flex; align-items:center; gap:12px; margin-top:22px; padding:0 2px; font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); flex-wrap:wrap; }
@@ -80,27 +90,135 @@ TTCBar.mount("Sign in");
 document.querySelector(".ttc-home").style.visibility = "hidden";  // no home button on the hub
 
 const grid = document.getElementById("grid");
-TTC.PROGRAMS.forEach(p => {
-  const live = !!p.file;
-  const el = document.createElement(live ? "a" : "div");
-  el.className = "tile" + (live ? "" : " soon");
-  el.style.setProperty("--c", p.color);
-  if (live) el.href = p.file;
+const EVENT_TABLE = "event_sheets";
+let eventSheets = [];   // generated event sheets from the DB
+
+// colors a generated sheet can pick from (its "bent")
+const PALETTE = [
+  { name:"Purple", v:"var(--lav)" }, { name:"Green", v:"var(--mint)" },
+  { name:"Gold",   v:"var(--yel)" }, { name:"Coral", v:"var(--sal)" },
+  { name:"Blue",   v:"var(--sky)" }, { name:"Pink",  v:"var(--ac)" },
+];
+
+function tileEl(opts){
+  // opts: {href, color, icon, name, blurb, pill, onDelete}
+  const el = document.createElement(opts.href ? "a" : "div");
+  el.className = "tile" + (opts.soon ? " soon" : "");
+  el.style.setProperty("--c", opts.color);
+  if (opts.href) el.href = opts.href;
   el.innerHTML =
-    `<div class="ico">${ICONS[p.id] || FALLBACK}</div>` +
-    `<div class="name">${p.name}</div>` +
-    `<div class="blurb">${p.blurb}</div>` +
+    `<div class="ico">${opts.icon}</div>` +
+    `<div class="name">${opts.name}</div>` +
+    `<div class="blurb">${opts.blurb||""}</div>` +
     `<div class="spring"></div>` +
-    (live ? (p.guide ? `<div class="pill guide">guide</div>` : "") : `<div class="pill">coming soon</div>`);
-  grid.appendChild(el);
-});
+    (opts.pill || "");
+  if (opts.onDelete){
+    const d = document.createElement("button");
+    d.className = "tile-del"; d.textContent = "✕"; d.title = "Remove this event sheet";
+    d.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); opts.onDelete(); };
+    el.appendChild(d);
+  }
+  return el;
+}
+
+function renderGrid(){
+  grid.innerHTML = "";
+  // 1) permanent programs from config
+  TTC.PROGRAMS.forEach(p => {
+    const live = !!p.file;
+    grid.appendChild(tileEl({
+      href: live ? p.file : null, soon: !live, color: p.color,
+      icon: ICONS[p.id] || FALLBACK, name: p.name, blurb: p.blurb,
+      pill: live ? (p.guide ? `<div class="pill guide">guide</div>` : "") : `<div class="pill">coming soon</div>`
+    }));
+  });
+  // 2) generated event sheets from the DB
+  eventSheets.forEach(s => {
+    grid.appendChild(tileEl({
+      href: `event.html?id=${encodeURIComponent(s.id)}`, color: s.color || "var(--ac)",
+      icon: ICON_EVENT, name: s.name, blurb: s.question ? "Asks: " + s.question : "Event sign-in",
+      pill: `<div class="pill event">event</div>`,
+      onDelete: isStaff() ? () => deleteSheet(s) : null
+    }));
+  });
+  // 3) the "+ New sign-in sheet" tile (staff only)
+  if (isStaff()){
+    const add = document.createElement("button");
+    add.className = "tile tile-add";
+    add.innerHTML = `<div class="plus">+</div><div class="name">New sign-in sheet</div><div class="blurb">For an event or pop-up</div>`;
+    add.onclick = openCreator;
+    grid.appendChild(add);
+  }
+}
+const isStaff = () => TTC.isStaff();
+const ICON_EVENT = `<svg viewBox="0 0 40 40"><g fill="none" stroke="#1e1a2b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14h24M8 14l2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2l2-16"/><path d="M14 14V9a6 6 0 0 1 12 0v5"/></g></svg>`;
+
+async function loadEventSheets(){
+  try{ const rows = await TTC.select(EVENT_TABLE, "archived=eq.false&order=created_at.asc"); eventSheets = rows; }
+  catch(e){ eventSheets = []; }
+  renderGrid();
+}
+
+/* ---- create a new event sheet ---- */
+function openCreator(){
+  TTCBar.modal(
+    `<h2 style="font-family:var(--display);font-weight:800;margin:0 0 10px">New sign-in sheet</h2>
+     <div style="display:flex;flex-direction:column;gap:12px">
+       <label class="cf"><span>Event name</span><input id="c-name" type="text" placeholder="e.g. Robotics Expo" autocomplete="off"></label>
+       <label class="cf"><span>One question to ask (optional)</span><input id="c-q" type="text" placeholder="e.g. Which school are you from?" autocomplete="off"></label>
+       <div class="cf"><span>Color</span><div id="c-colors" style="display:flex;flex-wrap:wrap;gap:8px"></div></div>
+       <div class="err" id="c-err" style="color:var(--bad);font-size:14px;min-height:18px"></div>
+     </div>
+     <div style="display:flex;gap:10px;margin-top:12px">
+       <button class="ttc-btn" data-close style="flex:1">Cancel</button>
+       <button class="ttc-btn ttc-btn-primary" id="c-make" style="flex:1">Make it</button>
+     </div>`,
+    () => {
+      if(!document.getElementById("cf-style")){ const st=document.createElement("style"); st.id="cf-style";
+        st.textContent=".cf{display:flex;flex-direction:column;gap:6px}.cf>span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.cf input{font:inherit;min-height:48px;padding:10px 14px;border:var(--b);border-radius:var(--radius-sm);background:#fff;color:var(--ink)}.swatch{width:44px;height:44px;border-radius:12px;border:var(--b);cursor:pointer;box-shadow:var(--shadow-sticker-sm)}.swatch[aria-pressed=true]{outline:3px solid var(--ink);outline-offset:2px}"; document.head.appendChild(st); }
+      let chosen = PALETTE[0].v;
+      const box = document.getElementById("c-colors");
+      PALETTE.forEach((c,i)=>{ const b=document.createElement("button"); b.className="swatch"; b.style.background=c.v; b.title=c.name; b.setAttribute("aria-pressed", i===0); b.onclick=()=>{ chosen=c.v; box.querySelectorAll(".swatch").forEach(s=>s.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); }; box.appendChild(b); });
+      document.getElementById("c-name").focus();
+      document.getElementById("c-make").onclick = async () => {
+        const name = document.getElementById("c-name").value.trim();
+        const q = document.getElementById("c-q").value.trim() || null;
+        if(!name){ document.getElementById("c-err").textContent = "Give the event a name."; return; }
+        document.getElementById("c-make").disabled = true; document.getElementById("c-err").textContent = "Making it…";
+        try{
+          const created = await TTC.insert(EVENT_TABLE, { name, question:q, color:chosen });
+          TTCBar.closeModal(); await loadEventSheets(); TTC.toast(`"${name}" is live.`);
+          // jump straight into the new sheet
+          location.href = `event.html?id=${encodeURIComponent(created.id)}`;
+        }catch(e){ document.getElementById("c-err").textContent = "Couldn't make it — check the WiFi."; document.getElementById("c-make").disabled = false; }
+      };
+    }
+  );
+}
+
+function deleteSheet(s){
+  TTCBar.modal(
+    `<h2 style="font-family:var(--display);font-weight:800;margin:0 0 8px">Remove "${s.name}"?</h2>
+     <p style="margin:0 0 14px">This takes the tile off the hub. The sign-ins people already did stay in the database.</p>
+     <div style="display:flex;gap:10px">
+       <button class="ttc-btn" data-close style="flex:1">Cancel</button>
+       <button class="ttc-btn ttc-btn-danger" id="d-yes" style="flex:1">Remove it</button>
+     </div>`,
+    () => { document.getElementById("d-yes").onclick = async () => {
+      try{ await TTC.update(EVENT_TABLE, s.id, { archived:true }); TTCBar.closeModal(); await loadEventSheets(); TTC.toast("Removed."); }
+      catch(e){ TTC.toast("Couldn't remove it."); }
+    }; }
+  );
+}
 
 function paintNote(){
-  document.getElementById("staffnote").textContent = TTC.isStaff()
-    ? "Staff mode on — open any program to edit, remove, or export."
-    : "Tap Staff up top to unlock editing + export across every sheet.";
+  document.getElementById("staffnote").textContent = isStaff()
+    ? "Staff mode on — open any program to edit, or tap + to make an event sheet."
+    : "Tap Staff up top to unlock editing, export, and making event sheets.";
 }
-paintNote(); TTCBar.onStaffChange(paintNote);
+
+renderGrid(); paintNote(); loadEventSheets();
+TTCBar.onStaffChange(()=>{ renderGrid(); paintNote(); });
 </script>
 </body>
 </html>
