@@ -116,6 +116,7 @@ uses its own table:
   Ask a Job → `askajob_visits`, LinkedIn → `linkedin_visits`,
   Vibe Coding → `vibecoding_visits`
 - the name dropdown → `members` (one row per person, shared by every sheet)
+- T-Shirt Making → `tshirt_visits`
 - calendar → `calendar_events`
 - generated event sheets → `event_sheets` (definitions) + `event_signins` (rows)
 - a new sheet → make it a new table (keep the same shape: a `date` column,

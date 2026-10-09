@@ -34,6 +34,7 @@ window.TTC = (function () {
     { id:"podcasting",  name:"Podcasting",     file:"podcasting.html", color:"var(--lav)",  emoji:"🎧", blurb:"Podcast booth sign-in" },
     { id:"printer",     name:"3D Printer",     file:"printer.html",    color:"var(--sal)",  emoji:"🖨️", blurb:"Maker bench sign-in" },
     { id:"art",         name:"Art Studio",     file:"art.html",        color:"var(--ac)",   emoji:"🎨", blurb:"Art studio sign-in" },
+    { id:"tshirt",      name:"T-Shirt Making", file:"tshirt.html",     color:"var(--sky)",  emoji:"👕", blurb:"Drop-in shirt making" },
     /* ---- programs (each one is a small file built on sheet.js) ---- */
     { id:"youthcouncil", name:"Youth Council", file:"youthcouncil.html", color:"var(--sal)",  emoji:"🗳️", blurb:"Council meeting sign-in" },
     { id:"musicvideo",  name:"Music Video",    file:"musicvideo.html", color:"var(--mint)", emoji:"🎬", blurb:"Tuesday music video program" },

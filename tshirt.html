@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>T-Shirt Making — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  /* ---- T-Shirt Making's own "bent": denim blue ---- */
+  :root{ --bgc:#e1e9f6; --ac:#2f56a8; --ac-text:#fff; --stripe:#2f56a8; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="sheet.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* T-Shirt Making: drop-in, no milestones tracked.
+   Edit the questions right here. How the list works is explained at the top of sheet.js. */
+TTCSheet.mount({
+  title: "T-Shirt Making",
+  table: "tshirt_visits",
+  eyebrow: "Kings Highway · Drop-in",
+  headline: ["Sign in to", "t-shirts"],
+  hereLabel: "at the shirt table right now",
+  listTitle: "At the shirt table today",
+  toast: "Signed in. Go make a shirt.",
+  fields: [
+    { key:"stage", label:"what are you doing today", type:"chips",
+      options:["Designing","Cutting","Pressing","Finishing"] },
+    { key:"project", label:"what are you making (optional)", type:"text", placeholder:"design or shirt name" },
+  ]
+});
+</script>
+</body>
+</html>
