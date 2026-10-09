@@ -56,6 +56,9 @@ button{ cursor:pointer; }
 
 /* header */
 .top{ display:grid; grid-template-columns:1fr auto; gap:20px; align-items:end; }
+.homebtn{ display:inline-flex; align-items:center; gap:10px; min-height:56px; padding:0 20px 0 16px; margin-bottom:18px; border:2px solid var(--rule); border-radius:999px; background:var(--card); color:var(--ink); font-weight:800; font-size:17px; text-decoration:none; box-shadow:3px 3px 0 var(--rule); }
+.homebtn .ico{ font-size:24px; line-height:1; }
+.homebtn:active{ transform:translate(3px,3px); box-shadow:0 0 0 var(--rule); }
 h1{ font-family:var(--display); font-weight:900; font-variation-settings:"SOFT" 100, "opsz" 144; font-size:clamp(46px,7.4vw,84px); line-height:.86; letter-spacing:-.025em; margin:0; }
 .boxes{ display:flex; gap:12px; align-items:stretch; }
 .box{ border:2px solid var(--rule); background:var(--card); min-width:128px; display:flex; flex-direction:column; }
@@ -152,6 +155,7 @@ td .sub{ display:block; font-size:12.5px; color:var(--soft); line-height:1.2; }
 </head>
 <body>
 <div class="wrap">
+  <a class="homebtn" href="index.html" aria-label="Back to all the sign-in sheets"><span class="ico" aria-hidden="true">⌂</span> All sheets</a>
   <header class="top">
     <h1>studio<br>sign-in</h1>
     <div class="boxes">
