@@ -12,6 +12,22 @@
   .dates { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; }
   .dates .field { flex:1; min-width:170px; }
   input[type=date]{ font:inherit; min-height:var(--tap); padding:12px 16px; border:var(--b); border-radius:var(--radius-sm); background:#fff; color:var(--ink); box-shadow:var(--shadow-sticker-sm); width:100%; }
+  .ff { margin-top:28px; }
+  .ff h3 { font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; margin:0 0 4px; }
+  .ff > p { margin:0 0 12px; color:var(--muted); font-size:15px; }
+  .ffrow { display:flex; align-items:center; gap:16px; padding:14px 18px; border-top:1px solid var(--line); }
+  .ffrow:first-child { border-top:0; }
+  .ffrow:nth-child(odd) { background:color-mix(in srgb,var(--ac) 14%,var(--paper)); }
+  .ffrow .def { flex:1; min-width:0; font-size:16px; line-height:1.35; }
+  .ffrow .def small { display:block; margin-top:4px; color:var(--muted); font-size:13.5px; }
+  .ffrow .num { text-align:center; min-width:96px; }
+  .ffrow .num button { font:inherit; background:none; border:0; cursor:pointer; color:var(--ink); padding:2px 8px; border-radius:12px; }
+  .ffrow .num button:hover:not([disabled]) { background:color-mix(in srgb,var(--ac) 35%,var(--paper)); }
+  .ffrow .num .big { font-family:var(--display); font-weight:800; font-size:38px; line-height:1; display:block; font-variant-numeric:tabular-nums; }
+  .ffrow .num .big.zero { color:var(--muted); opacity:.55; }
+  .ffrow .num .split { font-family:var(--mono); font-size:10.5px; color:var(--muted); display:block; margin-top:4px; line-height:1.35; }
+  .ffcard { overflow:hidden; border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); background:var(--paper); }
+  .sect { font-family:var(--display); font-weight:800; font-size:30px; letter-spacing:-.02em; margin:38px 0 0; }
   .q { margin-top:28px; }
   .q h3 { font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; margin:0 0 4px; }
   .q p { margin:0 0 12px; color:var(--muted); font-size:15px; }
@@ -49,6 +65,18 @@
 TTCBar.mount("A&P Report");
 const M = TTCMilestones, app = document.getElementById("app");
 const PROGS = Object.keys(M.PROGRAMS);
+/* The Network's own wording, from the A&P Report (Second Semester 2025, pages 8-9). */
+const OFFICIAL = {
+  "Apprentice": ["Used tools, materials or techniques to produce a basic outcome.", "e.g., followed a tutorial to replicate a simple program; assembled a basic circuit; practiced a sewing stitch; recorded a first audio take"],
+  "Creator": ["Designed and produced an original project or work.", "e.g., created an original drawing, song, video, or program; designed a basic game, animation, or mural concept; wrote and performed an original poem"],
+  "Refiner": ["Revised or improved a project through testing, feedback, or multiple versions.", "e.g., edited a video or audio track; revised a poem or design draft; reworked a garment for fit or aesthetics; debugged or adjusted code to improve performance"],
+  "Integrator": ["Combined multiple tools, techniques, or processes to create a more complex project.", "e.g., combined music and video; integrated hardware and software; mixed media or materials; coordinated writing, performance, and staging in a presentation"],
+  "Team Member": ["Contributed substantially to a collaborative project.", "e.g., co-developed a robot, worked on a coding project as part of a team, edited a group video"],
+  "Presenter": ["Shared and explained their work to others.", "e.g., gave a presentation, recorded a podcast, demoed a program, or led a Clubhouse tour"],
+  "Mentor": ["Taught a skill or guided peers in their projects.", "e.g., showed others how to use a tool, supported peers in completing a project"],
+  "Community Leader": ["Actively completed a project that addresses community needs or aspirations.", "e.g., co-led a youth campaign, created a neighborhood resource, or mobilized peers around a civic goal"],
+};
+let incl = "confirmed";   // which count goes in the form number: staff-confirmed only, or + sign-in only
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pad = n => String(n).padStart(2,"0");
 const dk = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -79,6 +107,14 @@ function cell(ms, prog){
   return { total:people.length, confirmed, inferredOnly:people.length-confirmed, people };
 }
 
+const fnum = c => incl==="confirmed" ? c.confirmed : c.total;
+function formBlock(qnum, title, list){
+  return `<div class="ff"><h3>Q${qnum} · ${title}</h3>
+    <p>Number of youth who reached each milestone at least once this period. A youth can be counted in more than one milestone.</p>
+    <div class="ffcard">${list.map(ms => { const c = cell(ms, null), n = fnum(c), extra = incl==="confirmed" ? c.inferredOnly : 0;
+      return `<div class="ffrow"><div class="def"><b>${ms}</b> – ${esc(OFFICIAL[ms][0])}<small>(${esc(OFFICIAL[ms][1])})</small></div>
+        <div class="num"><button data-ms="${esc(ms)}" data-p="" ${c.total?"":"disabled"} aria-label="${n} youth, ${ms}"><span class="big ${n?"":"zero"}">${n}</span>${extra?`<span class="split">+${extra} more from<br>sign-in data</span>`:""}</button></div></div>`; }).join("")}</div></div>`;
+}
 function table(list){
   return `<div class="tablewrap"><table><thead><tr><th>milestone</th>${PROGS.map(p=>`<th class="n">${esc(M.PROGRAMS[p].name)}</th>`).join("")}<th class="n all">All programs</th></tr></thead><tbody>
     ${list.map(ms => `<tr><td class="ms"><b>${ms}</b></td>${[...PROGS, null].map(p => {
@@ -114,11 +150,19 @@ function render(){
     </section>
     ${state==="loading" ? `<p class="status">Loading…</p>` : state==="error" ? `<p class="status bad">Can't reach the database — check the WiFi, then pick the dates again.</p>` : `
     ${any ? "" : `<p class="status">No milestones marked in this period yet. Mark them in staff mode on any program sheet (the ★ milestones button on a sign-in row).</p>`}
-    <div class="q"><h3>Q21 · Technical skill / project-making</h3><p>Youth who reached each milestone at least once in the period.</p>${table(M.TECHNICAL)}</div>
-    <div class="q"><h3>Q22 · Social / communication / leadership</h3><p>Youth who reached each milestone at least once in the period.</p>${table(M.SOCIAL)}</div>
+    <h2 class="sect">For the A&amp;P form</h2>
+    <div class="chips" style="margin-top:12px"><span class="fl" style="align-self:center">number to enter</span>
+      <button type="button" class="chip" data-incl="confirmed" aria-pressed="${incl==="confirmed"}">Confirmed by staff only</button>
+      <button type="button" class="chip" data-incl="all" aria-pressed="${incl==="all"}">Confirmed + from sign-in data</button></div>
+    ${formBlock(21, "Technical skill / project-making", M.TECHNICAL)}
+    ${formBlock(22, "Social / communication / leadership", M.SOCIAL)}
+    <h2 class="sect">By program</h2>
+    <div class="q"><h3>Q21 · Technical skill / project-making</h3><p>Same counts, split by program. Each program's own wording is in <code>milestones.js</code>.</p>${table(M.TECHNICAL)}</div>
+    <div class="q"><h3>Q22 · Social / communication / leadership</h3><p>Same counts, split by program.</p>${table(M.SOCIAL)}</div>
     <section class="card notes"><b>How to read this</b><ul>
-      <li>Every number is <b>unique youth</b>. "All programs" counts a person once even if they hit the milestone in several programs, so it can be smaller than the row added up.</li>
-      <li>A plain number means every one was <b>confirmed</b> by staff. Where some were only credited from a sign-in suggestion (for example, being signed in together), the cell says how many, so you can decide what to send to the network.</li>
+      <li>Every number is <b>unique youth</b>. The form numbers count a person once even if they hit the milestone in several programs, so they can be smaller than the program columns added up.</li>
+      <li>The form asks for an estimate. Use <b>Confirmed by staff only</b> for the number you can fully stand behind; <b>Confirmed + from sign-in data</b> adds kids who were only credited from a sign-in suggestion (for example, being signed in together). The "by program" tables always show how many of each.</li>
+      <li>The wording and examples under each milestone are copied from the Network's A&amp;P Report (Second Semester 2025).</li>
       <li>Youth who signed in during this period: ${PROGS.map(p=>`${esc(M.PROGRAMS[p].name)} <b>${attended[p]??"–"}</b>`).join(" · ")}.</li>
       <li><b>FTC Mentor</b> is N/A (no returning members year to year). <b>Ask a Job</b> is attendance only and not counted here. <b>LinkedIn</b> is not on the milestone grid yet; "helped others" was tapped <b>${helped}</b> time${helped===1?"":"s"} this period.</li>
       <li>Tap any number to see who is behind it.</li>
@@ -127,11 +171,12 @@ function render(){
 }
 
 function wire(){
+  app.querySelectorAll("[data-incl]").forEach(b=>b.onclick=()=>{ incl=b.dataset.incl; render(); });
   app.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{ preset=b.dataset.preset; [from,to]=PRESETS[preset]().map(dk); load(); });
   const f=document.getElementById("d-from"), t=document.getElementById("d-to");
   if(f) f.onchange=()=>{ if(f.value){ from=f.value; if(to<from) to=from; preset=""; load(); } };
   if(t) t.onchange=()=>{ if(t.value){ to=t.value; if(to<from) from=to; preset=""; load(); } };
-  app.querySelectorAll("td.n button").forEach(b=>b.onclick=()=>showWho(b.dataset.ms, b.dataset.p||null));
+  app.querySelectorAll("td.n button, .ffrow .num button").forEach(b=>b.onclick=()=>showWho(b.dataset.ms, b.dataset.p||null));
   const s=document.getElementById("x-sum"); if(s) s.onclick=exportCounts;
   const d=document.getElementById("x-det"); if(d) d.onclick=exportDetail;
   const p=document.getElementById("x-print"); if(p) p.onclick=()=>window.print();
