@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A&amp;P Report — Kings Highway TTC</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  :root{ --bgc:#fff3c4; --ac:#ffd34e; --stripe:#a67c00; }
+  .controls { padding:20px 22px; display:flex; flex-direction:column; gap:14px; }
+  .dates { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; }
+  .dates .field { flex:1; min-width:170px; }
+  input[type=date]{ font:inherit; min-height:var(--tap); padding:12px 16px; border:var(--b); border-radius:var(--radius-sm); background:#fff; color:var(--ink); box-shadow:var(--shadow-sticker-sm); width:100%; }
+  .ff { margin-top:28px; }
+  .ff h3 { font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; margin:0 0 4px; }
+  .ff > p { margin:0 0 12px; color:var(--muted); font-size:15px; }
+  .ffrow { display:flex; align-items:center; gap:16px; padding:14px 18px; border-top:1px solid var(--line); }
+  .ffrow:first-child { border-top:0; }
+  .ffrow:nth-child(odd) { background:color-mix(in srgb,var(--ac) 14%,var(--paper)); }
+  .ffrow .def { flex:1; min-width:0; font-size:16px; line-height:1.35; }
+  .ffrow .def small { display:block; margin-top:4px; color:var(--muted); font-size:13.5px; }
+  .ffrow .num { text-align:center; min-width:96px; }
+  .ffrow .num button { font:inherit; background:none; border:0; cursor:pointer; color:var(--ink); padding:2px 8px; border-radius:12px; }
+  .ffrow .num button:hover:not([disabled]) { background:color-mix(in srgb,var(--ac) 35%,var(--paper)); }
+  .ffrow .num .big { font-family:var(--display); font-weight:800; font-size:38px; line-height:1; display:block; font-variant-numeric:tabular-nums; }
+  .ffrow .num .big.zero { color:var(--muted); opacity:.55; }
+  .ffrow .num .split { font-family:var(--mono); font-size:10.5px; color:var(--muted); display:block; margin-top:4px; line-height:1.35; }
+  .ffcard { overflow:hidden; border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); background:var(--paper); }
+  .sect { font-family:var(--display); font-weight:800; font-size:30px; letter-spacing:-.02em; margin:38px 0 0; }
+  .q { margin-top:28px; }
+  .q h3 { font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; margin:0 0 4px; }
+  .q p { margin:0 0 12px; color:var(--muted); font-size:15px; }
+  .q th, .q td { padding:11px 6px; } .q th { white-space:normal; font-size:10px; } .q td.ms, .q th:first-child { padding-left:14px; }
+  td.n, th.n { text-align:center; }
+  td.n button { font:inherit; background:none; border:0; cursor:pointer; color:var(--ink); padding:2px 6px; border-radius:10px; width:100%; }
+  td.n button:hover { background:color-mix(in srgb,var(--ac) 30%,var(--paper)); }
+  td.n .big { font-family:var(--display); font-weight:800; font-size:26px; line-height:1; display:block; font-variant-numeric:tabular-nums; }
+  td.n .split { font-family:var(--mono); font-size:10.5px; color:var(--muted); display:block; margin-top:3px; line-height:1.35; }
+  td.n .zero { color:var(--muted); opacity:.55; }
+  td.na { text-align:center; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  td.ms b { font-family:var(--display); font-size:18px; }
+  th.all, td.all { background:color-mix(in srgb,var(--ac) 28%,var(--paper)); border-left:var(--b); }
+  .notes { margin-top:24px; padding:18px 22px; font-size:15.5px; }
+  .notes ul { margin:8px 0 0; padding-left:20px; } .notes li { margin:5px 0; }
+  .who-list { max-height:55vh; overflow:auto; margin:10px 0 14px; }
+  .who-list div { padding:8px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:12px; }
+  .who-list small { font-family:var(--mono); font-size:11px; color:var(--muted); text-align:right; }
+  .gate { padding:26px; text-align:center; }
+  @media print { .ttc-topbar, .controls .chips, .stafftools, body::before, body::after { display:none !important; } body{ background:#fff; } }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="milestones.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* A&P REPORT — how many youth hit each milestone at least once in a period.
+   Laid out like the Clubhouse Network A&P form: Q21 = Technical, Q22 = Social.
+   Counts are UNIQUE YOUTH. "Confirmed" = a staff member saw it and tapped it.
+   "Sign-in only" = credited from a sign-in suggestion and never confirmed by eye. */
+TTCBar.mount("A&P Report");
+const M = TTCMilestones, app = document.getElementById("app");
+const PROGS = Object.keys(M.PROGRAMS);
+/* The Network's own wording, from the A&P Report (Second Semester 2025, pages 8-9). */
+const OFFICIAL = {
+  "Apprentice": ["Used tools, materials or techniques to produce a basic outcome.", "e.g., followed a tutorial to replicate a simple program; assembled a basic circuit; practiced a sewing stitch; recorded a first audio take"],
+  "Creator": ["Designed and produced an original project or work.", "e.g., created an original drawing, song, video, or program; designed a basic game, animation, or mural concept; wrote and performed an original poem"],
+  "Refiner": ["Revised or improved a project through testing, feedback, or multiple versions.", "e.g., edited a video or audio track; revised a poem or design draft; reworked a garment for fit or aesthetics; debugged or adjusted code to improve performance"],
+  "Integrator": ["Combined multiple tools, techniques, or processes to create a more complex project.", "e.g., combined music and video; integrated hardware and software; mixed media or materials; coordinated writing, performance, and staging in a presentation"],
+  "Team Member": ["Contributed substantially to a collaborative project.", "e.g., co-developed a robot, worked on a coding project as part of a team, edited a group video"],
+  "Presenter": ["Shared and explained their work to others.", "e.g., gave a presentation, recorded a podcast, demoed a program, or led a Clubhouse tour"],
+  "Mentor": ["Taught a skill or guided peers in their projects.", "e.g., showed others how to use a tool, supported peers in completing a project"],
+  "Community Leader": ["Actively completed a project that addresses community needs or aspirations.", "e.g., co-led a youth campaign, created a neighborhood resource, or mobilized peers around a civic goal"],
+};
+let incl = "all";   // which count goes in the form number: staff-confirmed only, or + sign-in only
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const dk = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const nice = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); };
+
+const now = new Date();
+const PRESETS = {
+  "This month":   () => [new Date(now.getFullYear(), now.getMonth(), 1), now],
+  "Last month":   () => [new Date(now.getFullYear(), now.getMonth()-1, 1), new Date(now.getFullYear(), now.getMonth(), 0)],
+  "This quarter": () => [new Date(now.getFullYear(), Math.floor(now.getMonth()/3)*3, 1), now],
+  "Last quarter": () => { const q=Math.floor(now.getMonth()/3)*3; return [new Date(now.getFullYear(), q-3, 1), new Date(now.getFullYear(), q, 0)]; },
+  "This year":    () => [new Date(now.getFullYear(), 0, 1), now],
+};
+let preset = "This quarter", [from, to] = PRESETS[preset]().map(dk);
+let rows = [], attended = {}, helped = 0, state = "idle";
+
+/* cell(milestone, program|null) -> { total, confirmed, inferredOnly, people[] } — unique youth */
+function cell(ms, prog){
+  const by = new Map();
+  rows.filter(r => r.milestone===ms && (!prog || r.program===prog)).forEach(r => {
+    const p = by.get(r.name_key) || { name:(r.first_name+" "+r.last_name).trim(), confirmed:false, dates:new Set(), progs:new Set() };
+    if (r.source==="confirmed") p.confirmed = true;
+    p.dates.add(r.date); p.progs.add(M.PROGRAMS[r.program] ? M.PROGRAMS[r.program].name : r.program);
+    by.set(r.name_key, p);
+  });
+  const people = [...by.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  const confirmed = people.filter(p=>p.confirmed).length;
+  return { total:people.length, confirmed, inferredOnly:people.length-confirmed, people };
+}
+
+const fnum = c => incl==="confirmed" ? c.confirmed : c.total;
+function formBlock(qnum, title, list){
+  return `<div class="ff"><h3>Q${qnum} · ${title}</h3>
+    <p>Number of youth who reached each milestone at least once this period. A youth can be counted in more than one milestone.</p>
+    <div class="ffcard">${list.map(ms => { const c = cell(ms, null), n = fnum(c), extra = incl==="confirmed" ? c.inferredOnly : 0;
+      return `<div class="ffrow"><div class="def"><b>${ms}</b> – ${esc(OFFICIAL[ms][0])}<small>(${esc(OFFICIAL[ms][1])})</small></div>
+        <div class="num"><button data-ms="${esc(ms)}" data-p="" ${c.total?"":"disabled"} aria-label="${n} youth, ${ms}"><span class="big ${n?"":"zero"}">${n}</span>${extra?`<span class="split">+${extra} more from<br>sign-in data</span>`:""}</button></div></div>`; }).join("")}</div></div>`;
+}
+function table(list){
+  return `<div class="tablewrap"><table><thead><tr><th>milestone</th>${PROGS.map(p=>`<th class="n">${esc(M.PROGRAMS[p].name)}</th>`).join("")}<th class="n all">All programs</th></tr></thead><tbody>
+    ${list.map(ms => `<tr><td class="ms"><b>${ms}</b></td>${[...PROGS, null].map(p => {
+      if (p && !M.PROGRAMS[p].criteria[ms]) return `<td class="na">N/A</td>`;
+      const c = cell(ms, p);
+      return `<td class="n ${p?"":"all"}"><button data-ms="${esc(ms)}" data-p="${p||""}" ${c.total?"":"disabled"} aria-label="${c.total} youth, ${ms}, ${p?esc(M.PROGRAMS[p].name):"all programs"}">
+        <span class="big ${c.total?"":"zero"}">${c.total}</span>${c.inferredOnly?`<span class="split">${c.confirmed} confirmed<br>${c.inferredOnly} sign-in only</span>`:""}</button></td>`;
+    }).join("")}</tr>`).join("")}
+  </tbody></table></div>`;
+}
+
+function render(){
+  if (!TTC.isStaff()){
+    app.innerHTML = `<section class="card gate"><h2 style="font-family:var(--display);font-weight:800;margin:0 0 8px">Staff only</h2><p style="margin:0">Tap <b>Staff</b> up top and enter the code to open the report.</p></section>`;
+    return;
+  }
+  const any = rows.length > 0;
+  app.innerHTML = `
+    <div class="lead"><span class="mono">Kings Highway · Clubhouse Network A&amp;P</span>
+      <h2>Milestone <em>report</em></h2>
+      <span class="here">${esc(nice(from))} to ${esc(nice(to))}</span></div>
+    <section class="card controls">
+      <div class="chips">${Object.keys(PRESETS).map(k=>`<button type="button" class="chip" data-preset="${k}" aria-pressed="${k===preset}">${k}</button>`).join("")}</div>
+      <div class="dates">
+        <div class="field"><label for="d-from">from</label><input type="date" id="d-from" value="${from}"></div>
+        <div class="field"><label for="d-to">to</label><input type="date" id="d-to" value="${to}"></div>
+      </div>
+      <div class="stafftools" style="margin-top:0">
+        <button class="ttc-btn ttc-btn-primary" id="x-sum" ${any?"":"disabled"}>Export counts (CSV)</button>
+        <button class="ttc-btn" id="x-det" ${any?"":"disabled"}>Export every record (CSV)</button>
+        <button class="ttc-btn" id="x-print">Print</button>
+      </div>
+    </section>
+    ${state==="loading" ? `<p class="status">Loading…</p>` : state==="error" ? `<p class="status bad">Can't reach the database — check the WiFi, then pick the dates again.</p>` : `
+    ${any ? "" : `<p class="status">No milestones marked in this period yet. Mark them in staff mode on any program sheet (the ★ milestones button on a sign-in row).</p>`}
+    <h2 class="sect">For the A&amp;P form</h2>
+    <div class="chips" style="margin-top:12px"><span class="fl" style="align-self:center">number to enter</span>
+      <button type="button" class="chip" data-incl="confirmed" aria-pressed="${incl==="confirmed"}">Confirmed by staff only</button>
+      <button type="button" class="chip" data-incl="all" aria-pressed="${incl==="all"}">Confirmed + from sign-in data</button></div>
+    ${formBlock(21, "Technical skill / project-making", M.TECHNICAL)}
+    ${formBlock(22, "Social / communication / leadership", M.SOCIAL)}
+    <h2 class="sect">By program</h2>
+    <div class="q"><h3>Q21 · Technical skill / project-making</h3><p>Same counts, split by program. Each program's own wording is in <code>milestones.js</code>.</p>${table(M.TECHNICAL)}</div>
+    <div class="q"><h3>Q22 · Social / communication / leadership</h3><p>Same counts, split by program.</p>${table(M.SOCIAL)}</div>
+    <section class="card notes"><b>How to read this</b><ul>
+      <li>Every number is <b>unique youth</b>. The form numbers count a person once even if they hit the milestone in several programs, so they can be smaller than the program columns added up.</li>
+      <li>The form asks for an estimate. Use <b>Confirmed by staff only</b> for the number you can fully stand behind; <b>Confirmed + from sign-in data</b> adds kids who were only credited from a sign-in suggestion (for example, being signed in together). The "by program" tables always show how many of each.</li>
+      <li>The wording and examples under each milestone are copied from the Network's A&amp;P Report (Second Semester 2025).</li>
+      <li>Youth who signed in during this period: ${PROGS.map(p=>`${esc(M.PROGRAMS[p].name)} <b>${attended[p]??"–"}</b>`).join(" · ")}.</li>
+      <li><b>FTC Mentor</b> is N/A (no returning members year to year). <b>Ask a Job</b> is attendance only and not counted here. <b>LinkedIn</b> is not on the milestone grid yet; "helped others" was tapped <b>${helped}</b> time${helped===1?"":"s"} this period.</li>
+      <li>Tap any number to see who is behind it.</li>
+    </ul></section>`}`;
+  wire();
+}
+
+function wire(){
+  app.querySelectorAll("[data-incl]").forEach(b=>b.onclick=()=>{ incl=b.dataset.incl; render(); });
+  app.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{ preset=b.dataset.preset; [from,to]=PRESETS[preset]().map(dk); load(); });
+  const f=document.getElementById("d-from"), t=document.getElementById("d-to");
+  if(f) f.onchange=()=>{ if(f.value){ from=f.value; if(to<from) to=from; preset=""; load(); } };
+  if(t) t.onchange=()=>{ if(t.value){ to=t.value; if(to<from) from=to; preset=""; load(); } };
+  app.querySelectorAll("td.n button, .ffrow .num button").forEach(b=>b.onclick=()=>showWho(b.dataset.ms, b.dataset.p||null));
+  const s=document.getElementById("x-sum"); if(s) s.onclick=exportCounts;
+  const d=document.getElementById("x-det"); if(d) d.onclick=exportDetail;
+  const p=document.getElementById("x-print"); if(p) p.onclick=()=>window.print();
+}
+
+function showWho(ms, prog){
+  const c = cell(ms, prog);
+  TTCBar.modal(`<h2 style="font-family:var(--display);font-weight:800;margin:0 0 2px">${esc(ms)}</h2>
+    <p style="margin:0;color:var(--muted);font-size:15px">${prog?esc(M.PROGRAMS[prog].name):"All programs"} · ${c.total} youth${prog?` · ${esc(M.PROGRAMS[prog].criteria[ms])}`:""}</p>
+    <div class="who-list">${c.people.map(p=>`<div><b>${esc(p.name)}</b><small>${p.confirmed?"confirmed":"sign-in only"} · ${p.dates.size} day${p.dates.size===1?"":"s"}${prog?"":"<br>"+esc([...p.progs].join(", "))}</small></div>`).join("")}</div>
+    <button class="ttc-btn ttc-btn-primary" data-close style="width:100%">Close</button>`);
+}
+
+const csvCell = x => { const s = x===null||x===undefined ? "" : String(x); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+function download(name, lines){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([lines.map(l=>l.map(csvCell).join(",")).join("\n")],{type:"text/csv"}));
+  a.download=name; document.body.appendChild(a); a.click(); a.remove();
+}
+function exportCounts(){
+  const out=[["question","milestone","program","youth_total","youth_confirmed","youth_sign_in_only","period_from","period_to"]];
+  [["Q21 Technical",M.TECHNICAL],["Q22 Social",M.SOCIAL]].forEach(([q,list])=>list.forEach(ms=>{
+    PROGS.forEach(p=>{ if(!M.PROGRAMS[p].criteria[ms]){ out.push([q,ms,M.PROGRAMS[p].name,"N/A","N/A","N/A",from,to]); return; } const c=cell(ms,p); out.push([q,ms,M.PROGRAMS[p].name,c.total,c.confirmed,c.inferredOnly,from,to]); });
+    const c=cell(ms,null); out.push([q,ms,"All programs (unique youth)",c.total,c.confirmed,c.inferredOnly,from,to]);
+  }));
+  download(`ap-milestone-counts_${from}_to_${to}.csv`, out); TTC.toast("Exported the counts.");
+}
+function exportDetail(){
+  const out=[["date","first_name","last_name","program","track","milestone","source","reason","confirmed_by"]];
+  rows.forEach(r=>out.push([r.date,r.first_name,r.last_name,M.PROGRAMS[r.program]?M.PROGRAMS[r.program].name:r.program,r.track,r.milestone,r.source==="confirmed"?"confirmed":"sign-in only",r.reason,r.confirmed_by]));
+  download(`ap-milestone-records_${from}_to_${to}.csv`, out); TTC.toast(`Exported ${rows.length} record${rows.length===1?"":"s"}.`);
+}
+
+let ticket = 0;
+async function load(){
+  if (!TTC.isStaff()){ render(); return; }
+  const mine = ++ticket; state="loading"; render();
+  try{
+    const range = `date=gte.${from}&date=lte.${to}`;
+    const [ms, lk, ...att] = await Promise.all([
+      TTC.select(M.TABLE, `${range}&order=date.asc&limit=20000`),
+      TTC.select("linkedin_visits", `${range}&helped_others=eq.true&select=id`),
+      ...PROGS.map(p => TTC.select(M.PROGRAMS[p].table, `${range}&select=first_name,last_name&limit=20000`)),
+    ]);
+    if (mine !== ticket) return;
+    rows = ms; helped = lk.length; attended = {};
+    PROGS.forEach((p,i)=>{ attended[p] = new Set(att[i].map(r=>(r.first_name+" "+r.last_name).trim().toLowerCase())).size; });
+    state="ready";
+  }catch(e){ if (mine !== ticket) return; state="error"; }
+  render();
+}
+TTCBar.onStaffChange(()=>load());
+load();
+</script>
+</body>
+</html>
