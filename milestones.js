@@ -27,7 +27,7 @@ window.TTCMilestones = (function () {
 
   /* How many people need to be signed in at the same time before the sheet
      suggests "Team Member" for being there together. */
-  const MIN_TOGETHER = 3;
+  const MIN_TOGETHER = 2;
 
   const PROGRAMS = {
     openmic: { name: "Open Mic", table: "openmic_visits", criteria: {

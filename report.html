@@ -76,7 +76,7 @@ const OFFICIAL = {
   "Mentor": ["Taught a skill or guided peers in their projects.", "e.g., showed others how to use a tool, supported peers in completing a project"],
   "Community Leader": ["Actively completed a project that addresses community needs or aspirations.", "e.g., co-led a youth campaign, created a neighborhood resource, or mobilized peers around a civic goal"],
 };
-let incl = "confirmed";   // which count goes in the form number: staff-confirmed only, or + sign-in only
+let incl = "all";   // which count goes in the form number: staff-confirmed only, or + sign-in only
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pad = n => String(n).padStart(2,"0");
 const dk = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
