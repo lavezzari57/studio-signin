@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Open Mic — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  /* ---- Open Mic's own "bent": stage pink with a hot spotlight pop ---- */
+  :root{ --bgc:#ffd9e6; --ac:#ff3d7f; --ac-text:#fff; --stripe:#c2185b; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="sheet.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* Open Mic: monthly Thursdays, 4:00 to 7:30. Sign-up only, 5 minutes / 2 pieces per teen.
+   Edit the questions right here. How the list works is explained at the top of sheet.js. */
+TTCSheet.mount({
+  title: "Open Mic",
+  table: "openmic_visits",
+  eyebrow: "Kings Highway · Open Mic Night",
+  headline: ["Sign in to", "open mic"],
+  hereLabel: "in the room right now",
+  listTitle: "In the room tonight",
+  toast: "Signed in. Break a leg.",
+  fields: [
+    { key:"role", label:"what are you here to do", type:"choice", required:true,
+      options:["Performing","Hosting","Supporting"] },
+    { key:"act_types", label:"what are you performing", type:"chips",
+      options:["Song","Poem","Writing","Other"], showIf: v => v.role === "Performing" },
+    { key:"originality", label:"original or cover", type:"choice",
+      options:["Original","Cover","Both"], showIf: v => v.role === "Performing" },
+    { key:"act_name", label:"name of your piece or act", type:"text", placeholder:"what's it called?",
+      showIf: v => v.role === "Performing" },
+    { key:"slot", label:"your slot", type:"choice",
+      options:["Signed up ahead","Standby"], showIf: v => v.role === "Performing" },
+    { key:"from_where", label:"where are you coming from", type:"choice",
+      options:["From the center","Visiting"],
+      hint:"Visiting from outside the center? Register with staff before you go on." },
+  ]
+});
+</script>
+</body>
+</html>

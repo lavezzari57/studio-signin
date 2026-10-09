@@ -20,6 +20,9 @@ Live at: **https://lavezzari57.github.io/studio-signin/**
 | `theme.css` | **The one knob.** Shared look: colors, fonts, the "Studio Sticker" shape language |
 | `config.js` | **The control panel.** Supabase connection, staff code, and the list of programs/tiles |
 | `staffbar.js` | The shared top bar (home button, title, staff unlock) every sheet uses |
+| `names.js` | The shared name dropdown. Once someone signs in anywhere, their name is a tap away on every sheet |
+| `sheet.js` + `sheet.css` | The shared engine behind the program sheets below |
+| `youthcouncil.html`, `musicvideo.html`, `openmic.html`, `peerpanel.html`, `askajob.html`, `linkedin.html`, `vibecoding.html` | Program sign-in sheets. Each is just its colors plus a short list of questions |
 
 ---
 
@@ -63,6 +66,23 @@ and `<script src="config.js">` + `<script src="staffbar.js">`, then call
 `TTCBar.mount("Your Title")`. Use `TTC.insert / select / update / remove`
 for its data. Copy `ftc.html` as a starting point — it's the simplest sheet.
 
+### Program sheets (the quick way)
+
+The program sheets all run on `sheet.js`. Open one (say `openmic.html`) and
+you'll see a `fields` list: each line is one question. Change the wording or
+the options there and that sheet updates. A question needs a matching column
+in that sheet's table (pick-one and typed answers are `text`, pick-many is
+`text[]`). In staff mode each of these sheets has an **Export all sign-ins
+(CSV)** button under the list.
+
+### The name dropdown
+
+Every sheet loads `names.js`. Tap a name box and a dropdown shows people who
+have signed in before; tap a name and it fills in first and last. New names
+are saved automatically the first time someone signs in, on any sheet. In
+staff mode each name in the dropdown has a ✕ for clearing out typos (that
+only removes it from the dropdown, never from the sign-in records).
+
 ---
 
 ## The database
@@ -73,6 +93,11 @@ uses its own table:
 - studio → `visits`
 - FTC → `ftc_visits`
 - podcasting → `podcast_visits`, 3D printer → `printer_visits`, art → `art_visits`
+- Youth Council → `youthcouncil_visits`, Music Video → `musicvideo_visits`,
+  Open Mic → `openmic_visits`, Career Panel → `peerpanel_visits`,
+  Ask a Job → `askajob_visits`, LinkedIn → `linkedin_visits`,
+  Vibe Coding → `vibecoding_visits`
+- the name dropdown → `members` (one row per person, shared by every sheet)
 - calendar → `calendar_events`
 - generated event sheets → `event_sheets` (definitions) + `event_signins` (rows)
 - a new sheet → make it a new table (keep the same shape: a `date` column,

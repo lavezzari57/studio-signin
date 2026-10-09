@@ -1,0 +1,50 @@
+/* =========================================================================
+   SHARED PROGRAM-SHEET LAYOUT — used by every sheet built on sheet.js.
+   Each sheet sets its own colors ("bent") in a tiny :root block in its file:
+     --bgc     screen wash          --ac       accent
+     --stripe  card stripe / focus  --ac-text  text color on the accent
+   ========================================================================= */
+.lead { margin: 4px 0 18px; }
+.lead h2 { font-family:var(--display); font-weight:800; font-size:clamp(40px,9vw,72px); line-height:.9; letter-spacing:-.035em; margin:6px 0 10px; }
+.lead h2 em { font-style:normal; display:inline-block; background:var(--ac); color:var(--ac-text,var(--ink)); border:var(--b); border-radius:.2em; padding:0 .14em .04em; transform:rotate(-2deg); box-shadow:var(--shadow-sticker); }
+.here { display:inline-flex; align-items:baseline; gap:10px; font-family:var(--mono); color:var(--muted); font-size:14px; }
+.here b { font-family:var(--display); font-size:22px; color:var(--ink); }
+
+.form { padding: 22px 22px 24px; display:flex; flex-direction:column; gap:18px; }
+.form.card { border-top: 10px solid var(--stripe,var(--ac)); }
+.names { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media(max-width:620px){ .names{ grid-template-columns:1fr; } }
+.field { display:flex; flex-direction:column; gap:7px; }
+.field label, .fl { font-family:var(--mono); font-size:12.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.hint { font-size:14px; color:var(--muted); margin-top:-2px; }
+input[type=text], input[type=time], textarea {
+  font:inherit; min-height:var(--tap); padding:12px 16px; border:var(--b); border-radius:var(--radius-sm);
+  background:#fff; color:var(--ink); box-shadow:var(--shadow-sticker-sm); resize:vertical; width:100%;
+}
+input:focus, textarea:focus { outline:none; box-shadow:4px 4px 0 var(--stripe,var(--ac)); }
+.chips { display:flex; flex-wrap:wrap; gap:10px; }
+.chip {
+  font:inherit; font-weight:600; cursor:pointer; padding:11px 16px; border:var(--b); border-radius:999px;
+  background:#fff; color:var(--ink); box-shadow:var(--shadow-sticker-sm); transition:transform .05s, box-shadow .05s;
+  display:inline-flex; align-items:center; gap:8px; min-height:48px;
+}
+.chip:active { transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
+.chip[aria-pressed="true"] { background:var(--ac); color:var(--ac-text,var(--ink)); }
+.go { width:100%; }
+
+.sheet { margin-top: 26px; }
+.sheet h3 { font-family:var(--display); font-weight:800; font-size:24px; letter-spacing:-.02em; margin:0 0 10px; }
+.tablewrap { border:var(--b); border-radius:var(--radius); overflow-x:auto; box-shadow:var(--shadow-sticker); background:var(--paper); }
+table { width:100%; border-collapse:separate; border-spacing:0; background:var(--paper); }
+th { font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); text-align:left; padding:12px 14px; background:color-mix(in srgb, var(--stripe,var(--ac)) 14%, var(--paper)); border-bottom:var(--b); white-space:nowrap; }
+td { padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:last-child td { border-bottom:0; }
+.nm { font-weight:700; }
+.del { font:inherit; font-size:12px; font-weight:700; cursor:pointer; margin-left:8px; color:var(--bad); background:none; border:0; text-decoration:underline; padding:6px 0; }
+.tog { font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; margin:6px 6px 0 0; padding:5px 11px; border:2px solid var(--ink); border-radius:999px; background:#fff; color:var(--ink); }
+.tog[aria-pressed="true"] { background:var(--mint); }
+.muted-row td { color:var(--muted); }
+.stafftools { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.stafftools .ttc-btn { min-height:48px; font-size:15px; }
+.status { font-family:var(--mono); font-size:12.5px; color:var(--muted); margin: 14px 0 0; }
+.status.bad { color:var(--bad); }

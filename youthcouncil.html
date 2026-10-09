@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Youth Council — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  /* ---- Youth Council's own "bent": warm orange, town-hall energy ---- */
+  :root{ --bgc:#ffe2c7; --ac:#ff7a1a; --stripe:#c2410c; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="sheet.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* Youth Council: twice a month on Thursdays.
+   Edit the questions right here. How the list works is explained at the top of sheet.js. */
+TTCSheet.mount({
+  title: "Youth Council",
+  table: "youthcouncil_visits",
+  eyebrow: "Kings Highway · Youth Council",
+  headline: ["Sign in to", "council"],
+  hereLabel: "at the table right now",
+  listTitle: "At the table today",
+  toast: "Signed in. Your voice counts.",
+  fields: [
+    { key:"role", label:"your role today", type:"choice",
+      options:["Member","Facilitator","Note-taker","Suggestion-box keeper"] },
+    { key:"brought_agenda", label:"bringing something for the agenda", type:"choice", list:false,
+      options:["Yes","No"] },
+    { key:"agenda_item", label:"what do you want to bring up", type:"text", placeholder:"your agenda item",
+      showIf: v => v.brought_agenda === "Yes" },
+    { key:"delegated_task", label:"taking on a task (optional)", type:"text", placeholder:"what are you handling?" },
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ask a Job — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  /* ---- Ask a Job's own "bent": sticky-note yellow ---- */
+  :root{ --bgc:#fff1b8; --ac:#ffcf33; --stripe:#a67c00; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="sheet.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* Ask a Job: attendance only. No milestones are tracked for this one, on purpose.
+   Edit the questions right here. How the list works is explained at the top of sheet.js. */
+TTCSheet.mount({
+  title: "Ask a Job",
+  table: "askajob_visits",
+  eyebrow: "Kings Highway · Ask a Job",
+  headline: ["Sign in to", "ask a job"],
+  hereLabel: "here right now",
+  listTitle: "Here today",
+  toast: "Signed in. Ask good questions.",
+  fields: [
+    { key:"talked_to", label:"who are you talking to (optional)", type:"text", placeholder:"name or library role" },
+    { key:"session_type", label:"session", type:"choice", options:["One-on-one","Group"] },
+  ]
+});
+</script>
+</body>
+</html>
