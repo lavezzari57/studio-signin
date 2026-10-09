@@ -30,6 +30,15 @@ window.TTCMilestones = (function () {
   const MIN_TOGETHER = 2;
 
   const PROGRAMS = {
+    studio: { name: "Music Studio", table: "visits", attend: "select=name&mode=neq.orient", criteria: {
+      "Team Member": "Works with another kid on a song or video (a feature, a co-write, a shared edit) and works through disagreements",
+      "Presenter": "Plays or shows finished work to others (a listening session, a screening, showing friends)",
+      "Mentor": "Teaches another kid a skill (recording, mixing, editing) or guides them through their session",
+      "Community Leader": "Makes something that addresses a community need, or mobilizes peers around a cause",
+      "Apprentice": "Uses the studio's tools to produce a basic outcome (records a first take, follows an editing tutorial)",
+      "Creator": "Writes or produces an original song, beat, or video",
+      "Refiner": "Revises a song or video after listening back or getting feedback (re-records, re-mixes, re-cuts)",
+      "Integrator": "Combines tools or media (a song plus a video for it, beat + vocals + live instruments)" } },
     openmic: { name: "Open Mic", table: "openmic_visits", criteria: {
       "Team Member": "Helps another teen prep, or stays to support others after their slot",
       "Presenter": "Performs (every act counts)",
@@ -89,6 +98,11 @@ window.TTCMilestones = (function () {
   /* Suggestions straight from what a sign-in says. Each returns
      [milestone, reason]. Keep these conservative: they are hints for staff. */
   const HINTS = {
+    studio: r => [
+      (r.mode === "song" || r.mode === "video") && ["Apprentice", r.mode === "song" ? "making a song" : "editing a video"],
+      r.mode === "song" && ["Creator", "making a song"],
+      /mixing|fine cut/.test(r.activity || "") && ["Refiner", (/mixing/.test(r.activity) ? "mixing a track" : "fine cut on a video")],
+    ],
     openmic: r => [
       r.role === "Performing" && ["Presenter", "signed in as performing"],
       r.role === "Performing" && ["Apprentice", "signed in as performing"],

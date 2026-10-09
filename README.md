@@ -77,8 +77,8 @@ in that sheet's table (pick-one and typed answers are `text`, pick-many is
 
 ### Milestones and the A&P report
 
-In staff mode, the tracked program sheets (Open Mic, Music Video, FTC, Youth
-Council, Vibe Coding, Career Panel) show a **★ milestones** button on each
+In staff mode, the tracked program sheets (the Music Studio, Open Mic, Music
+Video, FTC, Youth Council, Vibe Coding, Career Panel) show a **★ milestones** button on each
 sign-in row. Tap it, then tap what you saw that kid do. Each button spells out
 what that milestone means in that program; that wording lives in
 `milestones.js`, so edit it there.
@@ -87,6 +87,10 @@ Under the list the sheet may also show **Suggested from today's sign-ins**
 (for example "signed in as performing", or "here with 3 others"). Those are
 hints only. Nothing is credited until you tap Credit, and the report counts
 them separately as "sign-in only" until a staff member confirms them.
+
+On the studio sheet the hints come from the song and video sign-ins (making a
+song, mixing, fine cut) and from kids being in the studio together. Studio
+orientation rows are left out of the milestones.
 
 The **A&P Report** tile appears on the hub in staff mode. Pick a period and it
 shows unique youth per milestone, per program and overall, laid out as Q21

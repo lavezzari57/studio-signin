@@ -218,11 +218,11 @@ async function load(){
     const [ms, lk, ...att] = await Promise.all([
       TTC.select(M.TABLE, `${range}&order=date.asc&limit=20000`),
       TTC.select("linkedin_visits", `${range}&helped_others=eq.true&select=id`),
-      ...PROGS.map(p => TTC.select(M.PROGRAMS[p].table, `${range}&select=first_name,last_name&limit=20000`)),
+      ...PROGS.map(p => TTC.select(M.PROGRAMS[p].table, `${range}&${M.PROGRAMS[p].attend || "select=first_name,last_name"}&limit=20000`)),
     ]);
     if (mine !== ticket) return;
     rows = ms; helped = lk.length; attended = {};
-    PROGS.forEach((p,i)=>{ attended[p] = new Set(att[i].map(r=>(r.first_name+" "+r.last_name).trim().toLowerCase())).size; });
+    PROGS.forEach((p,i)=>{ attended[p] = new Set(att[i].map(r=>(r.name || (r.first_name+" "+r.last_name)).trim().replace(/\s+/g," ").toLowerCase())).size; });
     state="ready";
   }catch(e){ if (mine !== ticket) return; state="error"; }
   render();
