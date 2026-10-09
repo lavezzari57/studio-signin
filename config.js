@@ -34,6 +34,7 @@ window.TTC = (function () {
     { id:"podcasting",  name:"Podcasting",     file:"podcasting.html", color:"var(--lav)",  emoji:"🎧", blurb:"Podcast booth sign-in" },
     { id:"printer",     name:"3D Printer",     file:"printer.html",    color:"var(--sal)",  emoji:"🖨️", blurb:"Maker bench sign-in" },
     { id:"art",         name:"Art Studio",     file:"art.html",        color:"var(--ac)",   emoji:"🎨", blurb:"Art studio sign-in" },
+    { id:"tshirt",      name:"T-Shirt Making", file:"tshirt.html",     color:"var(--sky)",  emoji:"👕", blurb:"Drop-in shirt making" },
     /* ---- programs (each one is a small file built on sheet.js) ---- */
     { id:"youthcouncil", name:"Youth Council", file:"youthcouncil.html", color:"var(--sal)",  emoji:"🗳️", blurb:"Council meeting sign-in" },
     { id:"musicvideo",  name:"Music Video",    file:"musicvideo.html", color:"var(--mint)", emoji:"🎬", blurb:"Tuesday music video program" },
@@ -42,6 +43,8 @@ window.TTC = (function () {
     { id:"askajob",     name:"Ask a Job",      file:"askajob.html",    color:"var(--yel)",  emoji:"💬", blurb:"Talk to someone about their job" },
     { id:"linkedin",    name:"LinkedIn Workshop", file:"linkedin.html", color:"var(--sky)", emoji:"💼", blurb:"Profile workshop (16+)" },
     { id:"vibecoding",  name:"Vibe Coding",    file:"vibecoding.html", color:"var(--mint)", emoji:"💻", blurb:"Build your own tool or app" },
+    /* staff:true = the tile only shows on the hub in staff mode */
+    { id:"report",      name:"A&P Report",     file:"report.html",     color:"var(--yel)",  emoji:"📊", blurb:"Milestone counts for the network report", staff:true },
   ];
 
   /* =======================================================================
