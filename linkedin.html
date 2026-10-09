@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LinkedIn Workshop — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  /* ---- LinkedIn Workshop's own "bent": professional blue ---- */
+  :root{ --bgc:#d6e9fb; --ac:#0a66c2; --ac-text:#fff; --stripe:#0a66c2; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="sheet.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* LinkedIn Workshops: about 45 minutes, 16+ only. Attendance + profile checklist.
+   Staff get a "Helped others" tap on each row. No milestone grid yet (still an open question).
+   Edit the questions right here. How the list works is explained at the top of sheet.js. */
+TTCSheet.mount({
+  title: "LinkedIn Workshop",
+  table: "linkedin_visits",
+  eyebrow: "Kings Highway · LinkedIn Workshop",
+  headline: ["Sign in to", "LinkedIn"],
+  hereLabel: "in the workshop right now",
+  listTitle: "In the workshop today",
+  toast: "Signed in. Let's build that profile.",
+  fields: [
+    { key:"age_16_plus", label:"how old are you", type:"choice", required:true, list:false,
+      options:["16 or older","Under 16"],
+      hint:"LinkedIn only allows accounts at 16 and up." },
+    { key:"profile_steps", label:"what's done on your profile so far", type:"chips",
+      options:["Account made","Photo","Cover photo","Jobs added"] },
+  ],
+  staffToggles: [ { key:"helped_others", label:"Helped others" } ]
+});
+</script>
+</body>
+</html>

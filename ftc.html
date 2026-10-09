@@ -53,6 +53,7 @@
 <body>
 <script src="config.js"></script>
 <script src="staffbar.js"></script>
+<script src="names.js"></script>
 
 <div class="ttc-wrap" id="app"></div>
 
@@ -64,6 +65,8 @@ const TABLE = "ftc_visits";
    (These also feed the A&P milestones later: building+coding together = Integrator,
    working with the team = Team Member.) */
 const WORKED = ["Building","Coding","CAD / design","Driving / testing","Engineering notebook","Outreach"];
+/* Your main role on the team (pick one). */
+const ROLES = ["Builder","Coder","Captain / coach"];
 
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pad = n => String(n).padStart(2,"0");
@@ -73,11 +76,11 @@ const pretty = hm => { if(!hm)return""; let[h,m]=hm.split(":").map(Number); cons
 const titleName = s => s.trim().replace(/\s+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 
 let todayCache=[], online=false, busy=false;
-const draft = { worked:[] };
+const draft = { worked:[], role:"" };
 const app = document.getElementById("app");
 const isStaff = () => TTC.isStaff();
 
-const fromApi = r => ({ id:r.id, first:r.first_name, last:r.last_name, date:r.date, timeIn:r.time_in, timeOut:r.time_out, signedOutAt:r.signed_out_at, autoSignedOut:r.auto_signed_out, workedOn:r.worked_on||[], notes:r.notes, createdAt:r.created_at });
+const fromApi = r => ({ id:r.id, first:r.first_name, last:r.last_name, date:r.date, timeIn:r.time_in, timeOut:r.time_out, signedOutAt:r.signed_out_at, autoSignedOut:r.auto_signed_out, workedOn:r.worked_on||[], role:r.role, notes:r.notes, createdAt:r.created_at });
 
 function render(){
   const here = todayCache.filter(v=>!v.timeOut).length;
@@ -92,6 +95,9 @@ function render(){
         <div class="field"><label>first name</label><input type="text" id="f-first" autocomplete="off" autocapitalize="words" placeholder="first" value="${esc(draft.first||"")}"></div>
         <div class="field"><label>last name</label><input type="text" id="f-last" autocomplete="off" autocapitalize="words" placeholder="last" value="${esc(draft.last||"")}"></div>
       </div>
+      <div class="field"><span class="fl">your role on the team</span>
+        <div class="chips">${ROLES.map(r=>`<button type="button" class="chip" data-r="${esc(r)}" aria-pressed="${draft.role===r}">${esc(r)}</button>`).join("")}</div>
+      </div>
       <div class="field"><span class="fl">what are you working on</span>
         <div class="chips">${WORKED.map(w=>`<button type="button" class="chip" data-w="${esc(w)}" aria-pressed="${draft.worked.includes(w)}">${esc(w)}</button>`).join("")}</div>
       </div>
@@ -100,10 +106,10 @@ function render(){
       <button class="ttc-btn ttc-btn-primary go" id="goBtn" ${(!draft.first?.trim()||!draft.last?.trim()||busy)?"disabled":""}>Sign in</button>
     </section>
     <div class="sheet"><h3>On the team today</h3>
-      <table><thead><tr><th style="width:32%">name</th><th>worked on</th><th>in</th><th>out</th></tr></thead><tbody>
+      <table><thead><tr><th style="width:32%">name</th><th>role</th><th>worked on</th><th>in</th><th>out</th></tr></thead><tbody>
       ${(()=>{ const rows=todayCache.slice().sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
-        return rows.length? rows.map(v=>`<tr><td class="nm">${esc(v.first)} ${esc(v.last)}${isStaff()?` <button class="del" data-del="${v.id}">remove</button>`:""}</td><td>${(v.workedOn||[]).join(", ")}</td><td>${pretty(v.timeIn)}</td><td>${v.timeOut?pretty(v.timeOut):(isStaff()?`<button class="del" data-out="${v.id}">sign out</button>`:"—")}</td></tr>`).join("")
-          : `<tr class="muted-row"><td colspan="4">Nobody signed in yet today.</td></tr>`; })()}
+        return rows.length? rows.map(v=>`<tr><td class="nm">${esc(v.first)} ${esc(v.last)}${isStaff()?` <button class="del" data-del="${v.id}">remove</button>`:""}</td><td>${esc(v.role||"")}</td><td>${(v.workedOn||[]).join(", ")}</td><td>${pretty(v.timeIn)}</td><td>${v.timeOut?pretty(v.timeOut):(isStaff()?`<button class="del" data-out="${v.id}">sign out</button>`:"—")}</td></tr>`).join("")
+          : `<tr class="muted-row"><td colspan="5">Nobody signed in yet today.</td></tr>`; })()}
       </tbody></table>
     </div>
     <p class="status ${online?'':'bad'}" id="status">${online?'Live — synced.':'Connecting…'}</p>`;
@@ -115,7 +121,8 @@ function wire(){
   const l=document.getElementById("f-last"); if(l) l.oninput=e=>{draft.last=e.target.value; tg();};
   const tin=document.getElementById("f-in"); if(tin) tin.oninput=e=>{draft.timeIn=e.target.value;};
   const nt=document.getElementById("f-notes"); if(nt) nt.oninput=e=>{draft.notes=e.target.value;};
-  document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ const w=c.dataset.w; const i=draft.worked.indexOf(w); i<0?draft.worked.push(w):draft.worked.splice(i,1); c.setAttribute("aria-pressed", draft.worked.includes(w)); });
+  document.querySelectorAll(".chip[data-r]").forEach(c=>c.onclick=()=>{ const r=c.dataset.r; draft.role = draft.role===r ? "" : r; document.querySelectorAll(".chip[data-r]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.r===draft.role)); });
+  document.querySelectorAll(".chip[data-w]").forEach(c=>c.onclick=()=>{ const w=c.dataset.w; const i=draft.worked.indexOf(w); i<0?draft.worked.push(w):draft.worked.splice(i,1); c.setAttribute("aria-pressed", draft.worked.includes(w)); });
   const go=document.getElementById("goBtn"); if(go) go.onclick=submit;
   document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>removeRow(b.dataset.del));
   document.querySelectorAll("[data-out]").forEach(b=>b.onclick=()=>signOut(b.dataset.out));
@@ -125,10 +132,10 @@ function tg(){ const go=document.getElementById("goBtn"); if(go) go.disabled = !
 async function submit(){
   busy=true; tg();
   try{
-    const row = { first_name:titleName(draft.first), last_name:titleName(draft.last), date:dateKey(), time_in:draft.timeIn||nowHM(), worked_on:draft.worked, notes:(draft.notes||"").trim()||null };
+    const row = { first_name:titleName(draft.first), last_name:titleName(draft.last), date:dateKey(), time_in:draft.timeIn||nowHM(), worked_on:draft.worked, role:draft.role||null, notes:(draft.notes||"").trim()||null };
     const saved = fromApi(await TTC.insert(TABLE, row));
     todayCache.push(saved);
-    draft.first=""; draft.last=""; draft.worked=[]; draft.notes=""; draft.timeIn="";
+    draft.first=""; draft.last=""; draft.worked=[]; draft.role=""; draft.notes=""; draft.timeIn="";
     TTC.toast("Signed in. Go build.");
     render();
   }catch(e){ TTC.toast("Couldn't save — check the WiFi and try again."); }

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Career Panel — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  /* ---- Career Panel's own "bent": indigo, a little dressed up ---- */
+  :root{ --bgc:#dfe6ff; --ac:#4f6bff; --ac-text:#fff; --stripe:#3046c9; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="sheet.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* Peer-to-Peer Career Panel: a working teen leads, everyone else is the audience.
+   Edit the questions right here. How the list works is explained at the top of sheet.js. */
+TTCSheet.mount({
+  title: "Career Panel",
+  table: "peerpanel_visits",
+  eyebrow: "Kings Highway · Peer-to-Peer Career Panel",
+  headline: ["Sign in to", "the panel"],
+  hereLabel: "in the room right now",
+  listTitle: "In the room today",
+  toast: "Signed in.",
+  fields: [
+    { key:"role", label:"are you presenting or in the audience", type:"choice", required:true,
+      options:["Presenter","Audience"] },
+    { key:"since_last", label:"what have you been doing since you were last in the space", type:"longtext",
+      placeholder:"job, school, projects...", showIf: v => v.role === "Presenter" },
+    { key:"panel_format", label:"panel format", type:"choice",
+      options:["Moderated Q&A","Open"], showIf: v => v.role === "Presenter" },
+    { key:"time_in_space", label:"how long were you coming here before today", type:"text",
+      placeholder:"e.g. 2 years", list:false, showIf: v => v.role === "Presenter" },
+  ]
+});
+</script>
+</body>
+</html>
