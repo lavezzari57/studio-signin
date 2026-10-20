@@ -27,9 +27,9 @@
 <script src="config.js"></script>
 <script>
   // ---- how long each phase runs ----
-  const CAL_MS   = 120000;  // calendar shows for ~2 minutes
-  const SLIDE_MS = 9000;    // board advances a slide every 9s (matches board.html)
-  const MIN_BOARD_MS = 12000, MAX_BOARD_MS = 150000; // clamp the board phase
+  const CAL_MS   = 60000;   // calendar shows for ~1 minute
+  const SLIDE_MS = 20000;   // board advances a slide every 20s (matches board.html)
+  const MIN_BOARD_MS = 12000, MAX_BOARD_MS = 600000; // clamp the board phase
 
   const cal   = document.getElementById("cal");
   const board = document.getElementById("board");

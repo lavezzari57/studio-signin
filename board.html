@@ -298,7 +298,7 @@ function paintSlide(){
 }
 function startTV(){
   clearInterval(tvTimer); clearInterval(tvReload);
-  tvTimer=setInterval(()=>{ if(!tvList.length)return; tvIdx=(tvIdx+1)%tvList.length; paintSlide(); }, 9000);
+  tvTimer=setInterval(()=>{ if(!tvList.length)return; tvIdx=(tvIdx+1)%tvList.length; paintSlide(); }, 20000);
   // re-pull from the DB every 2 min so adds/removals on another device show up, and expiry kicks in
   tvReload=setInterval(async()=>{ await load(); if(document.body.classList.contains("tv")) renderTV(); }, 120000);
 }
