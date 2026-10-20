@@ -126,9 +126,27 @@ function liveNow(s){
 function expired(s){ return s.until && s.until<todayISO(); }
 
 async function load(){
-  try{ slides = await TTC.select(TABLE, "order=sort.asc,created_at.asc"); online=true; }
+  try{ const all = await TTC.select(TABLE, "order=sort.asc,created_at.asc"); online=true;
+       slides = all.filter(s=>!s.removed_at); sweep(all); }
   catch(e){ online=false; }
   render();
+}
+
+/* Housekeeping: a week after a slide expires or is taken down, delete its image
+   file from storage. The row (title, dates, original file name) is kept forever. */
+const GRACE_DAYS=7;
+async function sweep(all){
+  try{
+    const cut=new Date(Date.now()-GRACE_DAYS*864e5); const p=n=>String(n).padStart(2,"0");
+    const cutISO=`${cut.getFullYear()}-${p(cut.getMonth()+1)}-${p(cut.getDate())}`;
+    const inUse=new Set(all.filter(s=>!s.removed_at && !(s.until && s.until<cutISO)).map(s=>s.image_url).filter(Boolean));
+    for(const s of all){
+      if(!s.image_url || s.image_deleted_at || inUse.has(s.image_url)) continue;
+      const gone = s.removed_at ? s.removed_at.slice(0,10)<cutISO : (s.until && s.until<cutISO);
+      if(!gone) continue;
+      if(await TTC.deleteImage(s.image_url)) await TTC.update(TABLE, s.id, { image_deleted_at:new Date().toISOString() });
+    }
+  }catch(e){}
 }
 
 /* ---------------- editor (iPad/laptop) ---------------- */
@@ -215,6 +233,7 @@ function openEditor(slide){
       // image upload
       const imgInput=document.getElementById("s-img"), prev=document.getElementById("s-prev");
       imgInput.oninput=()=>{ prev.src=imgInput.value; prev.style.display=imgInput.value?"":"none"; };
+      let origName = (slide && slide.image_filename) || null;
       const upBtn=document.getElementById("s-upbtn"), fileInput=document.getElementById("s-file");
       upBtn.onclick=()=>fileInput.click();
       fileInput.onchange=async()=>{
@@ -222,6 +241,7 @@ function openEditor(slide){
         upBtn.disabled=true; upBtn.textContent="Uploading…";
         try{
           const url=await TTC.uploadImage(f, "board", 1600);
+          origName=f.name;
           imgInput.value=url; prev.src=url; prev.style.display="";
           upBtn.textContent="Uploaded ✓"; setTimeout(()=>{ upBtn.textContent="Upload a photo"; upBtn.disabled=false; },1500);
         }catch(e){
@@ -235,6 +255,8 @@ function openEditor(slide){
         const row={ kind, title,
           body:document.getElementById("s-body").value.trim()||null,
           image_url:document.getElementById("s-img").value.trim()||null,
+          image_filename: document.getElementById("s-img").value.trim() ? origName : null,
+          image_deleted_at: null,
           image_full:document.getElementById("s-full").checked,
           starts_on:document.getElementById("s-start").value||null,
           until:document.getElementById("s-until").value||null };
@@ -250,10 +272,10 @@ function openEditor(slide){
 function confirmDelete(s){
   TTCBar.modal(
     `<h2 class="modal-h">Take down "${esc(s.title)}"?</h2>
-     <p style="margin:0 0 14px">This removes it from the board for good.</p>
+     <p style="margin:0 0 14px">It comes off the board. The record (name, dates, file name) stays in your export.</p>
      <div style="display:flex;gap:10px"><button class="ttc-btn" data-close style="flex:1">Cancel</button>
        <button class="ttc-btn ttc-btn-danger" id="d-yes" style="flex:1">Take it down</button></div>`,
-    ()=>{ document.getElementById("d-yes").onclick=async()=>{ try{ await TTC.remove(TABLE,s.id); await load(); TTCBar.closeModal(); TTC.toast("Taken down."); }catch(e){ TTC.toast("Couldn't remove it."); } }; }
+    ()=>{ document.getElementById("d-yes").onclick=async()=>{ try{ await TTC.update(TABLE,s.id,{removed_at:new Date().toISOString()}); await load(); TTCBar.closeModal(); TTC.toast("Taken down."); }catch(e){ TTC.toast("Couldn't remove it."); } }; }
   );
 }
 

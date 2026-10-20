@@ -127,7 +127,9 @@ window.TTC = (function () {
   async function uploadImage(file, bucket, maxPx) {
     bucket = bucket || "board"; maxPx = maxPx || 1600;
     const blob = await resizeImage(file, maxPx);
-    const name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+    // keep a readable slug of the original file name inside the stored name
+    const slug = (file.name || "image").replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "image";
+    const name = Date.now() + "-" + slug + ".jpg";
     const path = bucket + "/" + name;
     const res = await fetch(SUPABASE_URL + "/storage/v1/object/" + path, {
       method: "POST",
@@ -136,6 +138,17 @@ window.TTC = (function () {
     });
     if (!res.ok) throw new Error("upload failed " + res.status);
     return SUPABASE_URL + "/storage/v1/object/public/" + path;
+  }
+
+  // delete a stored image given its public URL (needs the "board deletes" storage policy)
+  async function deleteImage(url) {
+    const marker = "/storage/v1/object/public/";
+    const i = (url || "").indexOf(marker);
+    if (i < 0) return false;                       // not one of ours (pasted link) - leave alone
+    const path = url.slice(i + marker.length);
+    const res = await fetch(SUPABASE_URL + "/storage/v1/object/" + path, {
+      method: "DELETE", headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY } });
+    return res.ok;
   }
 
   // ---- tiny shared UI helpers every sheet can use ----
@@ -149,6 +162,6 @@ window.TTC = (function () {
   return {
     SUPABASE_URL, SUPABASE_KEY, STAFF_MINUTES, PROGRAMS,
     isStaff, unlockStaff, lockStaff, checkPin, staffUntil,
-    select, insert, update, remove, rest, headers, toast, uploadImage
+    select, insert, update, remove, rest, headers, toast, uploadImage, deleteImage
   };
 })();

@@ -43,9 +43,9 @@
   const todayISO = () => { const d=new Date(); const p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
   async function liveBoardCount(){
     try{
-      const rows = await TTC.select("board_slides", "select=starts_on,until");
+      const rows = await TTC.select("board_slides", "select=*");
       const t = todayISO();
-      return rows.filter(s => (!s.starts_on || s.starts_on<=t) && (!s.until || s.until>=t)).length;
+      return rows.filter(s => !s.removed_at && (!s.starts_on || s.starts_on<=t) && (!s.until || s.until>=t)).length;
     }catch(e){ return 0; }
   }
 

@@ -55,6 +55,7 @@
 </head>
 <body>
 <script src="config.js"></script>
+<script src="export.js"></script>
 <script src="staffbar.js"></script>
 
 <div class="ttc-wrap">
@@ -157,6 +158,16 @@ function renderGrid(){
     add.innerHTML = `<div class="plus">+</div><div class="name">New sign-in sheet</div><div class="blurb">For an event or pop-up</div>`;
     add.onclick = openCreator;
     grid.appendChild(add);
+    const ex = document.createElement("button");
+    ex.className = "tile tile-add";
+    ex.innerHTML = `<div class="plus">⤓</div><div class="name">Export everything</div><div class="blurb">One Excel file, every sheet</div>`;
+    ex.onclick = async ()=>{
+      const nm = ex.querySelector(".blurb");
+      try{ const n = await TTCExport.run(l=>{ nm.textContent = "Getting " + l + "…"; });
+           nm.textContent = "Done: " + n + " tabs"; TTC.toast("Exported."); }
+      catch(e){ nm.textContent = "Didn't work, check WiFi"; }
+    };
+    grid.appendChild(ex);
   }
 }
 const isStaff = () => TTC.isStaff();
