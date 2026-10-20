@@ -103,6 +103,40 @@ window.TTC = (function () {
     if (!res.ok) throw new Error("delete failed " + res.status);
   }
 
+  // ---- image upload to Supabase Storage (bucket must exist + be public) ----
+  // Resizes the image in the browser to maxPx on its long side, uploads it,
+  // and returns the public URL. Used by The Board; reusable elsewhere.
+  function resizeImage(file, maxPx) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width: w, height: h } = img;
+        const scale = Math.min(1, maxPx / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        c.toBlob(b => b ? resolve(b) : reject(new Error("resize failed")), "image/jpeg", 0.85);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("not an image")); };
+      img.src = url;
+    });
+  }
+  async function uploadImage(file, bucket, maxPx) {
+    bucket = bucket || "board"; maxPx = maxPx || 1600;
+    const blob = await resizeImage(file, maxPx);
+    const name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+    const path = bucket + "/" + name;
+    const res = await fetch(SUPABASE_URL + "/storage/v1/object/" + path, {
+      method: "POST",
+      headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "image/jpeg" },
+      body: blob
+    });
+    if (!res.ok) throw new Error("upload failed " + res.status);
+    return SUPABASE_URL + "/storage/v1/object/public/" + path;
+  }
+
   // ---- tiny shared UI helpers every sheet can use ----
   function toast(msg) {
     let t = document.querySelector(".ttc-toast");
@@ -114,6 +148,6 @@ window.TTC = (function () {
   return {
     SUPABASE_URL, SUPABASE_KEY, STAFF_MINUTES, PROGRAMS,
     isStaff, unlockStaff, lockStaff, checkPin, staffUntil,
-    select, insert, update, remove, rest, headers, toast
+    select, insert, update, remove, rest, headers, toast, uploadImage
   };
 })();

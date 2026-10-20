@@ -185,7 +185,15 @@ function openEditor(slide){
          <div class="kindpick" id="s-kinds">${KIND_ORDER.map(k=>`<button type="button" data-k="${k}" class="k-${k}" style="--kc:${KINDS[k].color}" aria-pressed="${s.kind===k}">${KINDS[k].label}</button>`).join("")}</div></div>
        <label class="ef"><span>Headline</span><input id="s-title" type="text" value="${esc(s.title)}" placeholder="big text on the slide"></label>
        <label class="ef"><span>Detail (optional)</span><textarea id="s-body" rows="2" placeholder="a line or two under the headline">${esc(s.body||"")}</textarea></label>
-       <label class="ef"><span>Image link (optional)</span><input id="s-img" type="url" value="${esc(s.image_url||"")}" placeholder="https://… a photo or flyer"></label>
+       <div class="ef"><span>Image (optional)</span>
+         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+           <button type="button" class="ttc-btn" id="s-upbtn" style="min-height:48px">Upload a photo</button>
+           <span class="mono" style="color:var(--muted);font-size:12px">or paste a link below</span>
+           <input type="file" id="s-file" accept="image/*" style="display:none">
+         </div>
+         <input id="s-img" type="url" value="${esc(s.image_url||"")}" placeholder="https://… a photo or flyer" style="margin-top:8px">
+         <img id="s-prev" src="${esc(s.image_url||"")}" alt="" style="${s.image_url?"":"display:none;"}max-height:120px;border:var(--b);border-radius:var(--radius-sm);margin-top:8px;object-fit:contain;align-self:flex-start" onerror="this.style.display='none'">
+       </div>
        <label style="display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer">
          <input type="checkbox" id="s-full" ${s.image_full?"checked":""} style="width:24px;height:24px"> Image is a flyer — fill the whole slide
        </label>
@@ -204,6 +212,23 @@ function openEditor(slide){
       const kb=document.getElementById("s-kinds");
       kb.querySelectorAll("button").forEach(b=>b.onclick=()=>{ kind=b.dataset.k; kb.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); });
       document.getElementById("s-title").focus();
+      // image upload
+      const imgInput=document.getElementById("s-img"), prev=document.getElementById("s-prev");
+      imgInput.oninput=()=>{ prev.src=imgInput.value; prev.style.display=imgInput.value?"":"none"; };
+      const upBtn=document.getElementById("s-upbtn"), fileInput=document.getElementById("s-file");
+      upBtn.onclick=()=>fileInput.click();
+      fileInput.onchange=async()=>{
+        const f=fileInput.files[0]; if(!f) return;
+        upBtn.disabled=true; upBtn.textContent="Uploading…";
+        try{
+          const url=await TTC.uploadImage(f, "board", 1600);
+          imgInput.value=url; prev.src=url; prev.style.display="";
+          upBtn.textContent="Uploaded ✓"; setTimeout(()=>{ upBtn.textContent="Upload a photo"; upBtn.disabled=false; },1500);
+        }catch(e){
+          document.getElementById("s-err").textContent="Upload didn't work — make sure the 'board' storage bucket exists, or paste a link instead.";
+          upBtn.textContent="Upload a photo"; upBtn.disabled=false;
+        }
+      };
       document.getElementById("s-save").onclick=async()=>{
         const title=document.getElementById("s-title").value.trim();
         if(!title){ document.getElementById("s-err").textContent="Give the slide a headline."; return; }
