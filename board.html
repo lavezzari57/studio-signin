@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Board</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  :root{ --bgc:#ffe9a8; --ac:#ff6fa8; }
+  /* each slide kind has its own accent */
+  .k-program    { --kc:var(--lav); }
+  .k-kidwork    { --kc:var(--mint); }
+  .k-urgent     { --kc:var(--sal); }
+  .k-announcement { --kc:var(--sky); }
+
+  .lead { margin: 4px 0 16px; display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px 16px; justify-content:space-between; }
+  .lead .ttl h2 { font-family:var(--display); font-weight:800; font-size:clamp(34px,8vw,60px); line-height:.9; letter-spacing:-.035em; margin:6px 0 4px; }
+  .lead .ttl h2 em { font-style:normal; display:inline-block; background:var(--ac); color:#fff; border:var(--b); border-radius:.2em; padding:0 .14em .04em; transform:rotate(-2deg); box-shadow:var(--shadow-sticker); }
+  .lead .sub { font-family:var(--mono); font-size:13px; color:var(--muted); }
+
+  .bar2 { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:18px; }
+  .legend { display:flex; flex-wrap:wrap; gap:8px 14px; }
+  .lg { display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .dot { width:15px; height:15px; border-radius:5px; border:2px solid var(--ink); }
+
+  /* editor list of slides */
+  .slides { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+  .slide-card { position:relative; background:var(--paper); border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); overflow:hidden; display:flex; flex-direction:column; min-height:150px; }
+  .slide-card .top { height:8px; background:var(--kc,var(--ac)); border-bottom:var(--b); }
+  .slide-card .pad { padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .slide-card .kind { font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink); background:var(--kc,var(--ac)); border:2px solid var(--ink); border-radius:999px; padding:2px 9px; align-self:flex-start; }
+  .slide-card h3 { font-family:var(--display); font-weight:800; font-size:20px; letter-spacing:-.01em; margin:4px 0 0; line-height:1.05; }
+  .slide-card p { font-size:14px; color:var(--muted); margin:0; }
+  .slide-card .thumb { width:100%; height:110px; object-fit:cover; border-bottom:var(--b); display:block; }
+  .slide-card .when { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:auto; padding-top:6px; }
+  .slide-card .when.expired { color:var(--bad); }
+  .slide-card .acts { display:flex; gap:8px; margin-top:8px; }
+  .slide-card .acts button { font:inherit; font-size:12px; font-weight:700; cursor:pointer; border:2px solid var(--ink); border-radius:999px; background:var(--paper); padding:4px 12px; box-shadow:1.5px 1.5px 0 var(--ink); }
+  .slide-card .acts .del { color:var(--bad); }
+
+  .addtile { border:2.5px dashed var(--ink); border-radius:var(--radius); background:var(--paper); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:150px; font:inherit; }
+  .addtile .plus { font-family:var(--display); font-weight:800; font-size:44px; line-height:1; }
+  .addtile .lbl { font-family:var(--display); font-weight:800; font-size:17px; }
+
+  .empty { font-family:var(--mono); color:var(--muted); padding:30px 0; }
+  .status { font-family:var(--mono); font-size:12.5px; color:var(--muted); margin:18px 0 0; }
+  .status.bad { color:var(--bad); }
+  .tvbtn { position:fixed; right:16px; bottom:16px; z-index:30; }
+
+  /* editor form fields */
+  .ef{display:flex;flex-direction:column;gap:6px}
+  .ef>span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .ef input,.ef textarea,.ef select{font:inherit;min-height:48px;padding:10px 14px;border:var(--b);border-radius:var(--radius-sm);background:#fff;color:var(--ink)}
+  .kindpick{display:flex;flex-wrap:wrap;gap:8px}
+  .kindpick button{font:inherit;font-weight:700;cursor:pointer;border:var(--b);border-radius:999px;background:#fff;padding:8px 14px;box-shadow:var(--shadow-sticker-sm)}
+  .kindpick button[aria-pressed=true]{background:var(--kc);color:var(--ink)}
+
+  h2.modal-h { font-family:var(--display); font-weight:800; letter-spacing:-.02em; margin:0 0 8px; }
+
+  /* =======================================================================
+     TV SLIDESHOW MODE
+     ======================================================================= */
+  @keyframes bOrnFall { 0%{transform:translate3d(0,-14vh,0) rotate(0)} 100%{transform:translate3d(5vw,114vh,0) rotate(300deg)} }
+  @keyframes bOrnRise { 0%{transform:translate3d(0,112vh,0) scale(1);opacity:0} 18%{opacity:.4} 100%{transform:translate3d(4vw,-12vh,0) scale(.5);opacity:0} }
+  @keyframes slideIn { 0%{opacity:0;transform:translateY(24px) scale(.98)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+
+  body.tv { overflow:hidden; height:100vh; }
+  body.tv .ttc-topbar, body.tv .lead, body.tv .bar2, body.tv .slides, body.tv .status, body.tv .tvbtn, body.tv .addtile { display:none; }
+  body.tv .ttc-wrap { max-width:none; margin:0; padding:0; height:100vh; }
+
+  .tv-stage { display:none; }
+  body.tv .tv-stage { display:block; position:fixed; inset:0; overflow:hidden; background:var(--bgc); }
+  .tv-orn { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .tv-orn i { position:absolute; border-radius:50%; display:block; }
+
+  .tv-slide { position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8vh 9vw; }
+  .tv-slide .kchip { font-family:var(--mono); font-size:2vh; letter-spacing:.2em; text-transform:uppercase; color:var(--ink); background:var(--kc,var(--ac)); border:var(--b); border-radius:999px; padding:.6vh 2vw; box-shadow:var(--shadow-sticker-sm); margin-bottom:3.5vh; animation:slideIn .6s ease both; }
+  .tv-slide h1 { font-family:var(--display); font-weight:800; font-size:clamp(48px,9vw,150px); line-height:.9; letter-spacing:-.03em; margin:0; text-wrap:balance; animation:slideIn .6s .05s ease both; }
+  .tv-slide h1 em { font-style:normal; display:inline-block; background:var(--kc,var(--ac)); color:#fff; border:var(--b); border-radius:.14em; padding:0 .1em .04em; transform:rotate(-1.5deg); box-shadow:var(--shadow-sticker); }
+  .tv-slide .detail { font-family:var(--sans); font-weight:600; font-size:clamp(22px,3.4vw,48px); color:var(--ink); margin-top:4vh; max-width:34ch; line-height:1.25; text-wrap:balance; animation:slideIn .6s .1s ease both; }
+  .tv-slide .pic { max-height:46vh; max-width:70vw; border:var(--b); border-radius:2vh; box-shadow:var(--shadow-sticker); margin-top:4vh; object-fit:contain; animation:slideIn .6s .1s ease both; }
+  /* full-bleed flyer */
+  .tv-slide.flyer { padding:0; }
+  .tv-slide.flyer img { width:100%; height:100%; object-fit:contain; }
+  /* corner brand + progress dots */
+  .tv-brand { position:fixed; left:3vw; bottom:3vh; z-index:3; font-family:var(--mono); font-size:1.6vh; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+  .tv-dots { position:fixed; right:3vw; bottom:3vh; z-index:3; display:flex; gap:1vh; }
+  .tv-dots i { width:1.3vh; height:1.3vh; border-radius:50%; border:2px solid var(--ink); background:transparent; }
+  .tv-dots i.on { background:var(--ink); }
+  .tv-empty { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:800; font-size:4vh; color:var(--muted); text-align:center; padding:10vw; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<div class="ttc-wrap" id="app"><div class="empty">Loading…</div></div>
+<button class="ttc-btn tvbtn" id="tvbtn">TV mode</button>
+
+<script>
+TTCBar.mount("Board");
+const TABLE = "board_slides";
+const KINDS = {
+  program:      { label:"Program",     color:"var(--lav)" },
+  kidwork:      { label:"Shout-out",   color:"var(--mint)" },
+  urgent:       { label:"Heads up",    color:"var(--sal)" },
+  announcement: { label:"Notice",      color:"var(--sky)" },
+};
+const KIND_ORDER = ["urgent","program","kidwork","announcement"]; // urgent first on the wall
+
+const pad=n=>String(n).padStart(2,"0");
+const todayISO = ()=>{ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtDate=s=>{ if(!s)return""; const[y,m,d]=s.split("-"); return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric"}); };
+const isStaff=()=>TTC.isStaff();
+
+let slides=[], online=false;
+const app=document.getElementById("app");
+
+// a slide is "showing now" if started (or no start) and not past its until date
+function liveNow(s){
+  const t=todayISO();
+  if(s.starts_on && s.starts_on>t) return false;
+  if(s.until && s.until<t) return false;
+  return true;
+}
+function expired(s){ return s.until && s.until<todayISO(); }
+
+async function load(){
+  try{ slides = await TTC.select(TABLE, "order=sort.asc,created_at.asc"); online=true; }
+  catch(e){ online=false; }
+  render();
+}
+
+/* ---------------- editor (iPad/laptop) ---------------- */
+function render(){
+  if(document.body.classList.contains("tv")){ renderTV(); return; }
+  const staff=isStaff();
+  const cards = slides.map(s=>{
+    const k=KINDS[s.kind]||KINDS.announcement;
+    const exp=expired(s);
+    const when = (s.starts_on||s.until)
+      ? `${s.starts_on?("from "+fmtDate(s.starts_on)):""}${s.starts_on&&s.until?" ":""}${s.until?("until "+fmtDate(s.until)):""}${exp?" · expired":""}`
+      : "always on";
+    return `<div class="slide-card k-${s.kind}" style="--kc:${s.color||k.color}">
+      <div class="top"></div>
+      ${s.image_url?`<img class="thumb" src="${esc(s.image_url)}" alt="" onerror="this.style.display='none'">`:""}
+      <div class="pad">
+        <span class="kind">${k.label}</span>
+        <h3>${esc(s.title)}</h3>
+        ${s.body?`<p>${esc(s.body)}</p>`:""}
+        <div class="when ${exp?'expired':''}">${when}</div>
+        ${staff?`<div class="acts"><button data-edit="${s.id}">Edit</button><button class="del" data-del="${s.id}">Remove</button></div>`:""}
+      </div>
+    </div>`;
+  }).join("");
+  app.innerHTML = `
+    <div class="lead">
+      <div class="ttl"><span class="mono">Kings Highway · Teen Tech Center</span><h2>The <em>Board</em></h2></div>
+      <div class="sub">What's up, what's coming, what you made</div>
+    </div>
+    <div class="bar2">
+      <div class="legend">${KIND_ORDER.map(k=>`<span class="lg"><span class="dot" style="background:${KINDS[k].color}"></span>${KINDS[k].label}</span>`).join("")}</div>
+    </div>
+    <div class="slides">
+      ${cards || (staff?"":`<div class="empty">Nothing on the board right now.</div>`)}
+      ${staff?`<button class="addtile" id="addSlide"><span class="plus">+</span><span class="lbl">Add a slide</span></button>`:""}
+    </div>
+    <p class="status ${online?'':'bad'}">${online?'Live — synced.':'Connecting…'} ${staff?'':'Tap Staff up top to add or change slides.'}</p>`;
+  wire();
+}
+function wire(){
+  const add=document.getElementById("addSlide"); if(add) add.onclick=()=>openEditor(null);
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openEditor(slides.find(s=>s.id===b.dataset.edit)));
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmDelete(slides.find(s=>s.id===b.dataset.del)));
+}
+
+/* ---------------- add / edit ---------------- */
+function openEditor(slide){
+  const isNew=!slide;
+  const s = slide || { kind:"announcement", title:"", body:"", image_url:"", image_full:false, starts_on:"", until:"" };
+  TTCBar.modal(
+    `<h2 class="modal-h">${isNew?"Add a slide":"Edit slide"}</h2>
+     <div style="display:flex;flex-direction:column;gap:12px;max-height:68vh;overflow:auto">
+       <div class="ef"><span>Type</span>
+         <div class="kindpick" id="s-kinds">${KIND_ORDER.map(k=>`<button type="button" data-k="${k}" class="k-${k}" style="--kc:${KINDS[k].color}" aria-pressed="${s.kind===k}">${KINDS[k].label}</button>`).join("")}</div></div>
+       <label class="ef"><span>Headline</span><input id="s-title" type="text" value="${esc(s.title)}" placeholder="big text on the slide"></label>
+       <label class="ef"><span>Detail (optional)</span><textarea id="s-body" rows="2" placeholder="a line or two under the headline">${esc(s.body||"")}</textarea></label>
+       <label class="ef"><span>Image link (optional)</span><input id="s-img" type="url" value="${esc(s.image_url||"")}" placeholder="https://… a photo or flyer"></label>
+       <label style="display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer">
+         <input type="checkbox" id="s-full" ${s.image_full?"checked":""} style="width:24px;height:24px"> Image is a flyer — fill the whole slide
+       </label>
+       <div style="display:flex;gap:10px">
+         <label class="ef" style="flex:1"><span>Show from (optional)</span><input id="s-start" type="date" value="${esc(s.starts_on||"")}"></label>
+         <label class="ef" style="flex:1"><span>Take down after</span><input id="s-until" type="date" value="${esc(s.until||"")}"></label>
+       </div>
+       <div class="err" id="s-err" style="color:var(--bad);font-size:14px;min-height:18px"></div>
+     </div>
+     <div style="display:flex;gap:10px;margin-top:12px">
+       <button class="ttc-btn" data-close style="flex:1">Cancel</button>
+       <button class="ttc-btn ttc-btn-primary" id="s-save" style="flex:1">${isNew?"Put it up":"Save"}</button>
+     </div>`,
+    () => {
+      let kind=s.kind;
+      const kb=document.getElementById("s-kinds");
+      kb.querySelectorAll("button").forEach(b=>b.onclick=()=>{ kind=b.dataset.k; kb.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); });
+      document.getElementById("s-title").focus();
+      document.getElementById("s-save").onclick=async()=>{
+        const title=document.getElementById("s-title").value.trim();
+        if(!title){ document.getElementById("s-err").textContent="Give the slide a headline."; return; }
+        const row={ kind, title,
+          body:document.getElementById("s-body").value.trim()||null,
+          image_url:document.getElementById("s-img").value.trim()||null,
+          image_full:document.getElementById("s-full").checked,
+          starts_on:document.getElementById("s-start").value||null,
+          until:document.getElementById("s-until").value||null };
+        document.getElementById("s-save").disabled=true; document.getElementById("s-err").textContent="Saving…";
+        try{
+          if(slide){ await TTC.update(TABLE, slide.id, row); } else { await TTC.insert(TABLE, row); }
+          await load(); TTCBar.closeModal(); TTC.toast(slide?"Saved.":"It's on the board.");
+        }catch(e){ document.getElementById("s-err").textContent="Couldn't save — check the WiFi."; document.getElementById("s-save").disabled=false; }
+      };
+    }
+  );
+}
+function confirmDelete(s){
+  TTCBar.modal(
+    `<h2 class="modal-h">Take down "${esc(s.title)}"?</h2>
+     <p style="margin:0 0 14px">This removes it from the board for good.</p>
+     <div style="display:flex;gap:10px"><button class="ttc-btn" data-close style="flex:1">Cancel</button>
+       <button class="ttc-btn ttc-btn-danger" id="d-yes" style="flex:1">Take it down</button></div>`,
+    ()=>{ document.getElementById("d-yes").onclick=async()=>{ try{ await TTC.remove(TABLE,s.id); await load(); TTCBar.closeModal(); TTC.toast("Taken down."); }catch(e){ TTC.toast("Couldn't remove it."); } }; }
+  );
+}
+
+/* ---------------- TV SLIDESHOW ---------------- */
+let tvList=[], tvIdx=0, tvTimer=null, tvReload=null;
+function cssColor(v){ const t=document.createElement("span"); t.style.color=v; document.body.appendChild(t); const c=getComputedStyle(t).color; t.remove(); return c; }
+
+function tvSlides(){
+  // only live (started, not expired), urgent first, then program/kidwork/announcement, keeping manual sort within
+  const live = slides.filter(liveNow);
+  return live.slice().sort((a,b)=>{
+    const ka=KIND_ORDER.indexOf(a.kind), kb=KIND_ORDER.indexOf(b.kind);
+    if(ka!==kb) return ka-kb;
+    return (a.sort-b.sort) || ((a.created_at||"").localeCompare(b.created_at||""));
+  });
+}
+function renderTV(){
+  tvList = tvSlides();
+  app.innerHTML = `<div class="tv-stage"><div class="tv-orn" id="tvOrn"></div><div id="tvHolder"></div>
+      <div class="tv-brand">Kings Highway · Teen Tech Center</div>
+      <div class="tv-dots" id="tvDots"></div></div>`;
+  spawnOrn();
+  if(!tvList.length){ document.getElementById("tvHolder").innerHTML=`<div class="tv-empty">Nothing on the board.<br>Add a slide to get it rolling.</div>`; return; }
+  tvIdx=0; paintSlide(); startTV();
+}
+function paintSlide(){
+  const s=tvList[tvIdx]; if(!s) return;
+  const k=KINDS[s.kind]||KINDS.announcement; const kc=s.color||k.color;
+  const holder=document.getElementById("tvHolder");
+  if(s.image_url && s.image_full){
+    holder.innerHTML=`<div class="tv-slide flyer k-${s.kind}" style="--kc:${kc}"><img src="${esc(s.image_url)}" alt="" onerror="this.parentNode.classList.remove('flyer');this.replaceWith(Object.assign(document.createElement('div'),{className:'detail',textContent:''}))"></div>`;
+  } else {
+    holder.innerHTML=`<div class="tv-slide k-${s.kind}" style="--kc:${kc}">
+      <span class="kchip">${k.label}</span>
+      <h1>${esc(s.title)}</h1>
+      ${s.body?`<div class="detail">${esc(s.body)}</div>`:""}
+      ${s.image_url?`<img class="pic" src="${esc(s.image_url)}" alt="" onerror="this.style.display='none'">`:""}
+    </div>`;
+  }
+  const dots=document.getElementById("tvDots");
+  if(dots) dots.innerHTML = tvList.map((_,i)=>`<i class="${i===tvIdx?'on':''}"></i>`).join("");
+}
+function startTV(){
+  clearInterval(tvTimer); clearInterval(tvReload);
+  tvTimer=setInterval(()=>{ if(!tvList.length)return; tvIdx=(tvIdx+1)%tvList.length; paintSlide(); }, 9000);
+  // re-pull from the DB every 2 min so adds/removals on another device show up, and expiry kicks in
+  tvReload=setInterval(async()=>{ await load(); if(document.body.classList.contains("tv")) renderTV(); }, 120000);
+}
+function spawnOrn(){
+  const orn=document.getElementById("tvOrn"); if(!orn)return; orn.innerHTML="";
+  const cols=["var(--lav)","var(--mint)","var(--sal)","var(--sky)","var(--ac)"];
+  for(let i=0;i<9;i++){ const el=document.createElement("i");
+    const size=5+Math.random()*9; el.style.width=size+"vw"; el.style.height=size+"vw"; el.style.left=(Math.random()*92)+"%";
+    el.style.background=cssColor(cols[i%cols.length]); el.style.opacity=(0.08+Math.random()*0.12).toFixed(2);
+    const dur=(20+Math.random()*26).toFixed(1); el.style.animation=`${Math.random()>.5?'bOrnRise':'bOrnFall'} ${dur}s linear ${(-Math.random()*20).toFixed(1)}s infinite`;
+    orn.appendChild(el);
+  }
+}
+
+function enterTV(){ document.body.classList.add("tv"); document.getElementById("tvbtn").textContent="Exit TV"; renderTV(); }
+function exitTV(){ document.body.classList.remove("tv"); clearInterval(tvTimer); clearInterval(tvReload); document.getElementById("tvbtn").textContent="TV mode"; render(); }
+document.getElementById("tvbtn").onclick=()=>{ document.body.classList.contains("tv")?exitTV():enterTV(); };
+document.addEventListener("dblclick",()=>{ if(document.body.classList.contains("tv")) exitTV(); });
+
+TTCBar.onStaffChange(()=>{ if(!document.body.classList.contains("tv")) render(); });
+load().then(()=>{ if(/[?&]tv\b/.test(location.search)) enterTV(); });
+</script>
+</body>
+</html>

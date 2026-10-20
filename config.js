@@ -31,6 +31,7 @@ window.TTC = (function () {
     { id:"mixdesk",     name:"Vocal Mix Desk", file:"mixdesk.html",  color:"var(--sky)",  emoji:"🎚️", blurb:"Vocal mixing, step by step", guide:true },
     { id:"ftc",         name:"FTC Robotics",   file:"ftc.html",      color:"var(--mint)", emoji:"🤖", blurb:"Robotics team sign-in" },
     { id:"calendar",    name:"Program Calendar", file:"calendar.html", color:"var(--yel)", emoji:"🗓️", blurb:"What's on, and when" },
+    { id:"board",       name:"The Board",      file:"board.html",    color:"var(--sky)",  emoji:"📣", blurb:"Announcements + shout-outs on the TV", guide:true },
     { id:"podcasting",  name:"Podcasting",     file:"podcasting.html", color:"var(--lav)",  emoji:"🎧", blurb:"Podcast booth sign-in" },
     { id:"printer",     name:"3D Printer",     file:"printer.html",    color:"var(--sal)",  emoji:"🖨️", blurb:"Maker bench sign-in" },
     { id:"art",         name:"Art Studio",     file:"art.html",        color:"var(--ac)",   emoji:"🎨", blurb:"Art studio sign-in" },
