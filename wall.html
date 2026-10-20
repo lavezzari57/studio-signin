@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wall</title>
+<style>
+  /* The Wall: one full-screen loop that cross-fades between the live calendar
+     and the live board. Point the library TV at wall.html?tv (or just wall.html)
+     and leave it. It embeds the real calendar + board TV views, so anything you
+     change on either shows up here automatically — nothing to keep in sync. */
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  .pane{position:fixed;inset:0;border:0;width:100vw;height:100vh;opacity:0;transition:opacity .8s ease;pointer-events:none}
+  .pane.show{opacity:1}
+  /* a tiny loading veil until the first pane is ready */
+  #veil{position:fixed;inset:0;background:#ffe9a8;display:flex;align-items:center;justify-content:center;
+    font-family:system-ui,sans-serif;font-weight:800;font-size:4vh;color:#575166;transition:opacity .6s;z-index:5}
+  #veil.gone{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="veil">Loading the wall…</div>
+<iframe id="cal"   class="pane" src="calendar.html?tv" title="Calendar"></iframe>
+<iframe id="board" class="pane" src="board.html?tv" title="Board"></iframe>
+
+<!-- config only, to read how many live board slides there are (for timing + skip-when-empty) -->
+<script src="config.js"></script>
+<script>
+  // ---- how long each phase runs ----
+  const CAL_MS   = 120000;  // calendar shows for ~2 minutes
+  const SLIDE_MS = 9000;    // board advances a slide every 9s (matches board.html)
+  const MIN_BOARD_MS = 12000, MAX_BOARD_MS = 150000; // clamp the board phase
+
+  const cal   = document.getElementById("cal");
+  const board = document.getElementById("board");
+  const veil  = document.getElementById("veil");
+  let started = false;
+
+  function show(el){ el.classList.add("show"); }
+  function hide(el){ el.classList.remove("show"); }
+
+  // count live (started, not expired) board slides so we show each once and skip an empty board
+  const todayISO = () => { const d=new Date(); const p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
+  async function liveBoardCount(){
+    try{
+      const rows = await TTC.select("board_slides", "select=starts_on,until");
+      const t = todayISO();
+      return rows.filter(s => (!s.starts_on || s.starts_on<=t) && (!s.until || s.until>=t)).length;
+    }catch(e){ return 0; }
+  }
+
+  async function runCalendar(){
+    show(cal); hide(board);
+    setTimeout(runBoard, CAL_MS);
+  }
+  async function runBoard(){
+    const n = await liveBoardCount();
+    if(n <= 0){ // nothing on the board — stay on the calendar, check again next cycle
+      runCalendar(); return;
+    }
+    // reload the board so it starts fresh at slide 1 and reflects the latest edits
+    board.src = "board.html?tv&t=" + Date.now();
+    show(board); hide(cal);
+    const dur = Math.min(MAX_BOARD_MS, Math.max(MIN_BOARD_MS, n * SLIDE_MS));
+    setTimeout(() => { // also refresh the calendar for the next calendar phase
+      cal.src = "calendar.html?tv&t=" + Date.now();
+      runCalendar();
+    }, dur);
+  }
+
+  // kick off once the calendar iframe has loaded (so the first thing seen is ready)
+  cal.addEventListener("load", () => {
+    if(started) return; started = true;
+    setTimeout(() => { veil.classList.add("gone"); runCalendar(); }, 700);
+  });
+  // safety: if load event is slow, start anyway after 6s
+  setTimeout(() => { if(!started){ started = true; veil.classList.add("gone"); runCalendar(); } }, 6000);
+
+  // double-click anywhere to... nothing special; it's a passive wall. (Exit by navigating away.)
+</script>
+</body>
+</html>
