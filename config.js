@@ -43,6 +43,7 @@ window.TTC = (function () {
     { id:"peerpanel",   name:"Career Panel",   file:"peerpanel.html",  color:"var(--lav)",  emoji:"🪑", blurb:"Peer-to-peer career panel" },
     { id:"askajob",     name:"Ask a Job",      file:"askajob.html",    color:"var(--yel)",  emoji:"💬", blurb:"Talk to someone about their job" },
     { id:"linkedin",    name:"LinkedIn Workshop", file:"linkedin.html", color:"var(--sky)", emoji:"💼", blurb:"Profile workshop (16+)" },
+    { id:"tshirt",      name:"T-Shirt Making", file:"tshirt.html",     color:"var(--sal)",  emoji:"👕", blurb:"Design and press your own shirt" },
     { id:"vibecoding",  name:"Vibe Coding",    file:"vibecoding.html", color:"var(--mint)", emoji:"💻", blurb:"Build your own tool or app" },
   ];
 
