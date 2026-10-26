@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Career Pathways — Sign In</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="sheet.css">
+<style>
+  /* ---- Career Pathways' own "bent": warm amber, like a folder tab ---- */
+  :root{ --bgc:#f6e6c8; --ac:#d98a1f; --ac-text:#fff; --stripe:#9a5f0a; }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="sheet.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+/* Career Pathways: attendance by name + email. Emails are saved but never shown in the
+   "signed in today" list (list:false). Edit the questions right here. */
+TTCSheet.mount({
+  title: "Career Pathways",
+  table: "pathways_visits",
+  eyebrow: "Kings Highway · Career Pathways",
+  headline: ["Sign in to", "pathways"],
+  hereLabel: "in the room right now",
+  listTitle: "Here today",
+  toast: "Signed in.",
+  fields: [
+    { key:"email", label:"your email", type:"text", placeholder:"name@email.com", required:true, list:false },
+  ]
+});
+</script>
+</body>
+</html>

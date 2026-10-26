@@ -6,7 +6,7 @@ window.TTCExport = (function(){
     ["visits","Studio"], ["ftc_visits","FTC"], ["podcast_visits","Podcasting"], ["printer_visits","3D Printer"],
     ["art_visits","Art"], ["youthcouncil_visits","Youth Council"], ["musicvideo_visits","Music Video"],
     ["openmic_visits","Open Mic"], ["peerpanel_visits","Career Panel"], ["askajob_visits","Ask a Job"],
-    ["linkedin_visits","LinkedIn"], ["vibecoding_visits","Vibe Coding"], ["tshirt_visits","T-shirt"],
+    ["linkedin_visits","LinkedIn"], ["vibecoding_visits","Vibe Coding"], ["tshirt_visits","T-shirt"], ["pathways_visits","Career Pathways"],
     ["event_sheets","Event sheets"], ["event_signins","Event sign-ins"], ["milestones","Milestones"]
   ];
   // columns to put first, per table (rest follow in database order)
