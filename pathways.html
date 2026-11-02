@@ -34,6 +34,91 @@ TTCSheet.mount({
     { key:"email", label:"your email", type:"text", placeholder:"name@email.com", required:true, list:false },
   ]
 });
+
+/* ---- Email dropdown ----
+   Once a first + last name is filled in, the email box offers the email(s)
+   that person used before. Only their own, so nobody sees anyone else's.
+   Also cleans up common typos (.come, gmial, @21gmail) before saving. */
+(function () {
+  const TABLE = "pathways_visits", MAX = 4;
+  let past = [];
+  const norm = s => String(s || "").trim().replace(/\s+/g, " ").toLowerCase();
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  async function load() {
+    try { past = await TTC.select(TABLE, "select=first_name,last_name,email,created_at&email=not.is.null&order=created_at.desc&limit=5000"); } catch (e) {}
+  }
+  function fix(e) {
+    e = String(e || "").trim().toLowerCase().replace(/\s+/g, "");
+    e = e.replace(/@(\d+)(gmail|yahoo|hotmail|icloud|outlook)\./, (m, n, d) => n + "@" + d + ".")
+         .replace(/@(gmial|gmal|gmai|gnail|gamil|gmaill)\./, "@gmail.")
+         .replace(/\.(come|con|cm|om|comm)$/, ".com");
+    return e;
+  }
+  function mine() {
+    const f = norm((document.getElementById("f-first") || {}).value), l = norm((document.getElementById("f-last") || {}).value);
+    if (!f || !l) return [];
+    const seen = new Set(), out = [];
+    past.forEach(r => {
+      if (norm(r.first_name) === f && norm(r.last_name) === l) {
+        const e = fix(r.email);
+        if (e && !seen.has(e)) { seen.add(e); out.push(e); }
+      }
+    });
+    return out.slice(0, MAX);
+  }
+
+  const box = document.createElement("div");
+  box.className = "ttc-names";
+  document.body.appendChild(box);
+  let anchor = null;
+  function show(input) {
+    anchor = input;
+    const q = norm(input.value);
+    const list = mine().filter(e => !q || e.startsWith(q));
+    if (!list.length || (list.length === 1 && list[0] === q)) { hide(); return; }
+    box.innerHTML = '<div class="cap">your email from last time</div>' +
+      list.map(e => '<div class="row"><button type="button" class="pick" data-email="' + esc(e) + '">' + esc(e) + '</button></div>').join("");
+    const r = input.getBoundingClientRect();
+    box.style.left = Math.max(12, r.left + window.scrollX) + "px";
+    box.style.top = (r.bottom + window.scrollY + 8) + "px";
+    box.style.minWidth = Math.max(240, r.width) + "px";
+    box.classList.add("open");
+  }
+  function hide() { box.classList.remove("open"); anchor = null; }
+  function setEmail(v) {
+    const el = document.getElementById("x-email"); if (!el) return;
+    el.value = v; el.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  box.addEventListener("pointerdown", e => {
+    const p = e.target.closest("[data-email]"); if (!p) return;
+    e.preventDefault(); setEmail(p.dataset.email); hide();
+    if (document.activeElement) document.activeElement.blur();
+  });
+
+  const isEmail = t => t && t.id === "x-email";
+  document.addEventListener("focusin", e => { if (isEmail(e.target)) show(e.target); });
+  document.addEventListener("input", e => { if (isEmail(e.target) && e.isTrusted) show(e.target); });
+  document.addEventListener("focusout", e => {
+    if (isEmail(e.target)) {
+      const fixed = fix(e.target.value);
+      if (fixed !== e.target.value) setEmail(fixed);
+      setTimeout(() => { if (!isEmail(document.activeElement)) hide(); }, 120);
+    }
+  });
+  // picked a name from the name dropdown and there's exactly one email on file? fill it in
+  document.addEventListener("input", e => {
+    if (e.isTrusted || !e.target || !["f-first", "f-last"].includes(e.target.id)) return;
+    setTimeout(() => {
+      const el = document.getElementById("x-email"), list = mine();
+      if (el && !el.value.trim() && list.length === 1) setEmail(list[0]);
+    }, 0);
+  });
+  // a new sign-in adds to the list
+  document.addEventListener("click", e => { if (e.target && e.target.id === "goBtn") setTimeout(load, 1500); });
+
+  load();
+  setInterval(load, 60000);
+})();
 </script>
 </body>
 </html>
