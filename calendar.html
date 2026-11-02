@@ -32,8 +32,8 @@
   .grid-wrap { background:var(--paper); border:var(--b); border-radius:var(--radius); box-shadow:var(--shadow-sticker); overflow:hidden; }
   .dow { display:grid; grid-template-columns:repeat(7,1fr); background:color-mix(in srgb, var(--ac) 16%, var(--paper)); border-bottom:var(--b); }
   .dow span { font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:center; padding:9px 0; }
-  .cells { display:grid; grid-template-columns:repeat(7,1fr); }
-  .cell { min-height:94px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px; display:flex; flex-direction:column; gap:4px; }
+  .cells { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .cell { min-width:0; min-height:94px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px; display:flex; flex-direction:column; gap:4px; }
   .cell:nth-child(7n){ border-right:0; }
   .cell.out { background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(30,26,43,.03) 6px,rgba(30,26,43,.03) 12px); }
   .cell .dnum { font-family:var(--display); font-weight:700; font-size:14px; color:var(--muted); }
@@ -88,7 +88,7 @@
   .tv-grid { flex:1 1 auto; display:flex; flex-direction:column; background:var(--paper); border:var(--b); border-radius:1.4vh; box-shadow:var(--shadow-sticker); overflow:hidden; min-height:0; }
   .tv-dow { display:grid; grid-template-columns:repeat(7,1fr); background:color-mix(in srgb,var(--ac) 16%,var(--paper)); border-bottom:var(--b); }
   .tv-dow span { font-family:var(--mono); font-size:1.1vh; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); text-align:center; padding:1vh 0; }
-  .tv-cells { flex:1 1 auto; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; min-height:0; }
+  .tv-cells { flex:1 1 auto; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); grid-auto-rows:1fr; min-height:0; }
   .tv-cell { border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:.7vh .6vw; display:flex; flex-direction:column; gap:.4vh; overflow:hidden; min-width:0; }
   .tv-cell:nth-child(7n){ border-right:0; }
   .tv-cell.out { background:repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(30,26,43,.03) 8px,rgba(30,26,43,.03) 16px); }
@@ -123,6 +123,57 @@
   .tv-ticker .crawl .run span { margin:0 2.4vw; }
   .tv-ticker .crawl .run .kdot { display:inline-block; width:1.2vh; height:1.2vh; border-radius:50%; border:2px solid var(--paper); margin-right:.5vw; vertical-align:middle; }
   body.tv .tv-left, body.tv .tv-right { padding-bottom:6vh; }
+
+  /* =======================================================================
+     WINTER / HOLIDAY SEASON (auto: Nov through Feb, body.winter)
+     ======================================================================= */
+  body.winter { --bgc:#e3e6fb; --ac:#c8325f; --evg:#1f7a5a; --frost:#f4f6ff;
+    background:
+      radial-gradient(60vw 40vw at 85% -5%, rgba(200,50,95,.16), transparent 60%),
+      radial-gradient(50vw 40vw at -10% 105%, rgba(31,122,90,.14), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%237d86c9' stroke-opacity='.18' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M30 18v24M19.6 24l20.8 12M19.6 36l20.8-12'/%3E%3Cpath d='M88 74v18M80.2 78.5l15.6 9M80.2 87.5l15.6-9'/%3E%3C/g%3E%3C/svg%3E"),
+      var(--bgc); }
+  body.winter::before { background:var(--ac); opacity:.14; }
+  body.winter::after  { background:var(--frost); opacity:.85; }
+  body.winter .lead .ttl h2 em, body.winter .tv-head h1 em { background:var(--ac); }
+  body.winter .tv-right { background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.15)), var(--bgc); }
+  body.winter .tv-right .sec-k .live { background:var(--evg); }
+  body.winter .tv-ticker .tag { background:var(--ac); }
+  body.winter .dow, body.winter .tv-dow, body.winter .daygroup h4 { background:linear-gradient(180deg,#ffffff, #eef0ff); }
+  body.winter .tv-cell.today, body.winter .cell.today { background:linear-gradient(180deg, rgba(200,50,95,.10), rgba(200,50,95,.03)); }
+
+  /* string lights across the top of the wall */
+  .lights { position:relative; height:4.2vh; margin:-.6vh 0 .6vh; flex:0 0 auto; }
+  .lights svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .lights .bulb { animation:twinkle var(--tw,3s) ease-in-out var(--td,0s) infinite; transform-box:fill-box; transform-origin:50% 0; }
+  @keyframes twinkle { 0%,100%{opacity:1; filter:drop-shadow(0 0 .5vh var(--glow))} 50%{opacity:.45; filter:none} }
+  .lights-sm { height:34px; margin:0 0 10px; }
+
+  /* falling snow (TV) */
+  @keyframes snowfall { 0%{transform:translate3d(0,-8vh,0) rotate(0)} 100%{transform:translate3d(var(--dx,3vw),112vh,0) rotate(220deg)} }
+  .tv-orn .flake { position:absolute; top:0; display:block; animation:snowfall var(--dur,22s) linear var(--del,0s) infinite; }
+
+  /* =======================================================================
+     PER-PROGRAM LOOKS — every program gets its own color, texture + icon
+     ======================================================================= */
+  .ev, .tv-ev { display:flex; align-items:center; gap:4px; background-color:var(--pc); background-image:var(--pp); }
+  .ev svg, .tv-ev svg { flex:0 0 auto; width:1.15em; height:1.15em; }
+  .ev .tx, .tv-ev .tx { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pchip { display:inline-flex; align-items:center; gap:6px; background-color:var(--pc); background-image:var(--pp); }
+  .pchip svg { width:1.2em; height:1.2em; }
+
+  .tv-card { position:relative; display:grid; grid-template-columns:auto 1fr; column-gap:1vw; padding-left:0; overflow:hidden; }
+  .tv-card .cd-badge { grid-row:1 / span 3; align-self:stretch; width:6.2vh; display:grid; place-items:center; background-color:var(--pc); background-image:var(--pp); border-right:var(--b); margin:-1.2vh 0; }
+  .tv-card .cd-badge svg { width:3.4vh; height:3.4vh; }
+  .tv-card .cd-top, .tv-card .cd-title, .tv-card .cd-loc { grid-column:2; }
+  .tv-card.big .cd-badge { width:7.6vh; }
+  .tv-card.big .cd-badge svg { width:4.2vh; height:4.2vh; }
+  .tv-card .cd-kind { background:var(--paper) !important; }
+
+  .li .pbar { width:10px; align-self:stretch; border:2px solid var(--ink); border-radius:6px; background-color:var(--pc); background-image:var(--pp); flex:0 0 auto; }
+  .lg .picon { width:26px; height:26px; border:2px solid var(--ink); border-radius:8px; display:grid; place-items:center; background-color:var(--pc); background-image:var(--pp); }
+  .lg .picon svg { width:16px; height:16px; }
+  .lg { text-transform:none; letter-spacing:0; font-family:var(--sans); font-weight:600; font-size:13px; color:var(--ink); }
 </style>
 </head>
 <body>
@@ -164,6 +215,77 @@ const KINDS = {
   deadline: { label:"Deadline", color:"var(--sal)" },
   closure:  { label:"Closed",   color:"var(--muted)" }
 };
+
+
+/* ---------- per-program looks ---------- */
+const IC = {
+  headphones:'<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.6"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.6"/>',
+  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 12.5h18"/>',
+  doc:'<path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/>',
+  clapper:'<rect x="3" y="9.5" width="18" height="10.5" rx="1.5"/><path d="M3.4 9.5 5 4.5h15.6L19 9.5M9 4.5l-1.6 5M14 4.5l-1.6 5M19 4.5l-1.6 5"/>',
+  spark:'<path d="M12 3v5M12 16v5M3 12h5M16 12h5M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"/>',
+  speech:'<path d="M3.5 4.5h12v8.5H9l-4 3v-3H3.5z"/><path d="M15.5 8.5h5v8.5H19v3l-4-3h-4v-2"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+  gear:'<circle cx="12" cy="12" r="3.3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  coin:'<circle cx="12" cy="12" r="8.5"/><path d="M14.6 9.3c-.6-.8-1.5-1.3-2.6-1.3-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1.1 0-2-.5-2.6-1.3M12 6v12"/>',
+  film:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7.5 4v16M16.5 4v16M3 8h4.5M3 12h4.5M3 16h4.5M16.5 8H21M16.5 12H21M16.5 16H21"/>',
+  pot:'<path d="M4.5 10.5h15v5.5a4 4 0 0 1-4 4h-7a4 4 0 0 1-4-4z"/><path d="M2.5 10.5h19M9.5 7c0-1.2 1.2-1.2 1.2-2.5M13.5 7c0-1.2 1.2-1.2 1.2-2.5"/>',
+  snow:'<path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5"/><path d="M9.6 4 12 6.3 14.4 4M9.6 20 12 17.7l2.4 2.3"/>',
+  flag:'<path d="M5.5 21V3.5M5.5 4h12l-2.2 4 2.2 4h-12"/>',
+  star:'<path d="M12 3.2l2.6 5.5 6 .7-4.4 4.1 1.1 6L12 16.6 6.7 19.5l1.1-6L3.4 9.4l6-.7z"/>'
+};
+const W = "rgba(255,255,255,.38)", K = "rgba(30,26,43,.10)";
+const LOOKS = [
+  { k:"studio orientation", c:"#7fc4ff", i:"headphones", p:`repeating-linear-gradient(90deg, ${W} 0 2px, transparent 2px 7px)` },
+  { k:"linkedin",           c:"#93b4ff", i:"briefcase",  p:`linear-gradient(135deg, ${W} 0 30%, transparent 30%)` },
+  { k:"resume",             c:"#ffd34e", i:"doc",        p:`repeating-linear-gradient(180deg, transparent 0 5px, ${K} 5px 6px)` },
+  { k:"music video",        c:"#ff6fa8", i:"clapper",    p:`repeating-linear-gradient(45deg, ${W} 0 4px, transparent 4px 10px)` },
+  { k:"money",              c:"#b8e35a", i:"coin",       p:`linear-gradient(${K} 1px, transparent 1px) 0 0/8px 8px, linear-gradient(90deg, ${K} 1px, transparent 1px) 0 0/8px 8px` },
+  { k:"reel works",         c:"#d79bff", i:"film",       p:`radial-gradient(circle at 50% 50%, ${W} 1.6px, transparent 2px) 0 0/9px 9px` },
+  { k:"youth council",      c:"#5fd0a3", i:"speech",     p:`radial-gradient(circle, ${W} 1.4px, transparent 1.8px) 0 0/7px 7px` },
+  { k:"open mic",           c:"#ff8f6b", i:"mic",        p:`radial-gradient(120% 90% at 50% -20%, rgba(255,255,255,.55), transparent 60%)` },
+  { k:"ftc",                c:"#3fd0c9", i:"gear",       p:`repeating-linear-gradient(-45deg, ${K} 0 4px, transparent 4px 9px)` },
+  { k:"cookmobile",         c:"#ffb26b", i:"pot",        p:`radial-gradient(circle, ${W} 2px, transparent 2.4px) 0 0/10px 10px` },
+  { k:"cal",                c:"#c3b2ff", i:"spark",      p:`conic-gradient(from 45deg, ${W} 0 25%, transparent 0 50%, ${W} 0 75%, transparent 0) 0 0/10px 10px`, exact:true }
+];
+const KIND_LOOK = {
+  closure:  { c:"#d4d9ec", i:"snow", p:`repeating-linear-gradient(135deg, rgba(255,255,255,.7) 0 3px, transparent 3px 8px)` },
+  deadline: { c:"#ff5d73", i:"flag", p:`repeating-linear-gradient(45deg, ${W} 0 3px, transparent 3px 8px)` },
+  event:    { c:"#ffc94e", i:"star", p:"none" },
+  program:  { c:"#b9a6ff", i:"star", p:"none" }
+};
+function lookFor(e){
+  if(e.kind==="closure") return Object.assign({key:"closure",name:"Closed"},KIND_LOOK.closure);
+  const t=(e.title||"").toLowerCase();
+  for(const L of LOOKS){
+    const hit = L.exact ? new RegExp("\\b"+L.k+"\\b").test(t) : t.includes(L.k);
+    if(hit) return Object.assign({key:L.k,name:null},L);
+  }
+  return Object.assign({key:"kind-"+e.kind,name:null},KIND_LOOK[e.kind]||KIND_LOOK.program);
+}
+const svgI=(name,sw)=>`<svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="${sw||2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[name]||IC.star}</svg>`;
+const pvars=e=>{ const L=lookFor(e); return `--pc:${L.c};--pp:${L.p}`; };
+function evChip(e, cls){ return `<span class="${cls}" data-ev="${e.id}" data-date="${e.date}" style="${pvars(e)}">${svgI(lookFor(e).i,2.2)}<span class="tx">${esc(e.title)}</span></span>`; }
+function programLegend(occ){
+  const seen=new Map();
+  occ.forEach(e=>{ const L=lookFor(e); const nm = L.key==="closure" ? "Closed" : e.title.replace(/:.*$/,"").replace(/^Reel Works.*/i,"Reel Works").replace(/^Closed.*/,"Closed");
+    if(!seen.has(L.key)) seen.set(L.key,{L,nm}); });
+  return [...seen.values()].map(({L,nm})=>`<span class="lg"><span class="picon" style="--pc:${L.c};--pp:${L.p}">${svgI(L.i,2.2)}</span>${esc(nm)}</span>`).join("");
+}
+/* season */
+function isWinter(d){ const m=d.getMonth(); return m>=10 || m<=1; }
+if(isWinter(new Date())) document.body.classList.add("winter");
+function lightsSVG(n, small){
+  const cols=["#c8325f","#ffd34e","#1f7a5a","#7fc4ff","#ff8f6b","#d79bff","#5fd0a3","#ff6fa8"];
+  const W=1000, H=small?34:40, seg=W/n; let path=`M0 4`, bulbs="";
+  for(let i=0;i<n;i++){ const x0=i*seg, x1=x0+seg; path+=` Q${x0+seg/2} ${H*0.62} ${x1} 4`; }
+  for(let i=0;i<n;i++){
+    const x=i*seg+seg/2, y=H*0.62/2+2+ (H*0.62-4)/2*0.0; // vertex of each scallop
+    const c=cols[i%cols.length];
+    bulbs+=`<g class="bulb" style="--glow:${c};--tw:${(2.4+((i*37)%17)/10).toFixed(1)}s;--td:-${((i*53)%30)/10}s"><rect x="${x-4}" y="${y-2}" width="8" height="5" rx="1" fill="var(--ink)"/><ellipse cx="${x}" cy="${y+10}" rx="6.5" ry="9" fill="${c}" stroke="var(--ink)" stroke-width="2"/><ellipse cx="${x-2}" cy="${y+7}" rx="1.6" ry="3" fill="rgba(255,255,255,.7)"/></g>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="var(--ink)" stroke-width="2"/></svg><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMin meet" style="overflow:visible">${bulbs}</svg>`;
+}
 
 const TABLE = "calendar_events";
 // map a DB row -> the event shape the UI uses
@@ -210,17 +332,23 @@ function occurrences(ev, from, to){
   const step = ev.recurrence.freq==="biweekly"?14:7;
   let cur = fromISO(ev.date); const until = ev.recurrence.until? fromISO(ev.recurrence.until): fromISO(to);
   let guard=0;
-  while(cur<=until && guard++<400){ add(iso(cur)); cur=new Date(cur.getTime()+step*86400000); }
+  while(cur<=until && guard++<400){ add(iso(cur)); cur=new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()+step); } // step by calendar days so daylight saving can't shift the weekday
   return out;
+}
+// a closure wins the day: nothing else shows on a date the center is closed
+function dropClosedDays(all){
+  const closed=new Set(all.filter(e=>e.kind==="closure").map(e=>e.date));
+  return all.filter(e=>e.kind==="closure" || !closed.has(e.date));
 }
 function eventsForMonth(mk){
   const from=`${mk}-01`; const [y,m]=mk.split("-").map(Number); const to=`${mk}-${pad(new Date(y,m,0).getDate())}`;
   const all=[]; events.forEach(ev=>all.push(...occurrences(ev,from,to)));
-  return all;
+  return dropClosedDays(all);
 }
 function eventsForRange(fromD, toD){
-  const from=iso(fromD), to=iso(toD); const all=[];
+  const from=iso(fromD), to=iso(toD); let all=[];
   events.forEach(ev=>all.push(...occurrences(ev,from,to)));
+  all=dropClosedDays(all);
   return all.sort((a,b)=> a.date===b.date ? (a.startTime||"").localeCompare(b.startTime||"") : a.date.localeCompare(b.date));
 }
 
@@ -253,7 +381,7 @@ function render(){
          <button id="next" ${month>=RANGE.end?'disabled':''}>›</button>
        </div>
      </div>
-     <div class="legend">${Object.entries(KINDS).map(([k,v])=>`<span class="lg"><span class="dot" style="background:${v.color}"></span>${v.label}</span>`).join("")}</div>` +
+     ${document.body.classList.contains("winter")?`<div class="lights lights-sm">${lightsSVG(14,true)}</div>`:""}<div class="legend">${programLegend(occ)}</div>` +
     (view==="month"? monthGrid(occ) : listView(occ)) +
     (TTC.isStaff()? `<div style="margin-top:16px"><button class="ttc-btn ttc-btn-primary" id="addEv">+ Add event</button></div>` : "") +
     `<p class="status ${online?'':'bad'}">${online?'Live — synced with the center.':'Connecting…'} ${TTC.isStaff()?'Staff mode: tap an event to edit or remove it.':''}</p>`;
@@ -269,7 +397,7 @@ function monthGrid(occ){
   for(let d=1;d<=days;d++){
     const ds=`${month}-${pad(d)}`; const list=byDay[ds]||[]; const shown=list.slice(0,3);
     cells+=`<div class="cell ${ds===todayISO?'today':''}"><span class="dnum">${d}</span>`+
-      shown.map(e=>`<span class="ev" data-ev="${e.id}" data-date="${e.date}" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${esc(e.title)}</span>`).join("")+
+      shown.map(e=>evChip(e,"ev")).join("")+
       (list.length>3?`<span class="more" data-day="${ds}">+${list.length-3} more</span>`:"")+`</div>`;
   }
   const trailing=(7-((startDow+days)%7))%7; for(let i=0;i<trailing;i++) cells+=`<div class="cell out"></div>`;
@@ -282,8 +410,9 @@ function listView(occ){
     const d=fromISO(ds); const hd=d.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
     return `<div class="daygroup"><h4>${hd}</h4>`+byDay[ds].map(e=>
       `<div class="li" data-ev="${e.id}" data-date="${e.date}">
+         <span class="pbar" style="${pvars(e)}"></span>
          <div class="time">${e.startTime?pretty(e.startTime)+(e.endTime?"–"+pretty(e.endTime):""):"all day"}</div>
-         <div class="body"><b>${esc(e.title)}</b><span class="chip" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${KINDS[e.kind].label}</span><div style="color:var(--muted);font-size:14px;margin-top:2px">${esc(e.location||"")}</div></div>
+         <div class="body"><b>${esc(e.title)}</b><span class="chip pchip" style="${pvars(e)}">${svgI(lookFor(e).i,2.2)}${KINDS[e.kind].label}</span><div style="color:var(--muted);font-size:14px;margin-top:2px">${esc(e.location||"")}</div></div>
        </div>`).join("")+`</div>`;
   }).join("")+`</div>`;
 }
@@ -439,6 +568,7 @@ function renderTV(){
           </div>
           <div class="clock"><div class="t" id="tvTime"></div><div class="d" id="tvDate"></div></div>
         </div>
+        ${document.body.classList.contains("winter")?`<div class="lights">${lightsSVG(16,false)}</div>`:""}
         ${tvGrid(todayISO)}
       </div>
       <div class="tv-right">
@@ -468,7 +598,7 @@ function tvGrid(todayISO){
   for(let d=1;d<=days;d++){
     const ds=`${mk}-${pad(d)}`; const list=byDay[ds]||[]; const shown=list.slice(0,3);
     cells+=`<div class="tv-cell ${ds===todayISO?'today':''}"><span class="dn">${d}</span>`+
-      shown.map(e=>`<span class="tv-ev" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${esc(e.title)}</span>`).join("")+
+      shown.map(e=>evChip(e,"tv-ev")).join("")+
       (list.length>3?`<span class="tv-more">+${list.length-3}</span>`:"")+`</div>`;
   }
   const trailing=(7-((startDow+days)%7))%7; for(let i=0;i<trailing;i++) cells+=`<div class="tv-cell out"></div>`;
@@ -476,8 +606,9 @@ function tvGrid(todayISO){
 }
 function card(e, big){
   const when = e.startTime? `${pretty(e.startTime)}${e.endTime?"–"+pretty(e.endTime):""}` : "All day";
-  return `<div class="tv-card ${big?'big':''}">
-    <div class="cd-top"><span class="cd-kind" style="background:${KINDS[e.kind].color}${e.kind==='closure'?';color:#fff':''}">${KINDS[e.kind].label}</span><span class="cd-time">${when}</span></div>
+  return `<div class="tv-card ${big?'big':''}" style="${pvars(e)}">
+    <div class="cd-badge">${svgI(lookFor(e).i,2)}</div>
+    <div class="cd-top"><span class="cd-kind">${KINDS[e.kind].label}</span><span class="cd-time">${when}</span></div>
     <div class="cd-title">${esc(e.title)}</div>
     <div class="cd-loc">${esc(e.location||"")}</div>
   </div>`;
@@ -499,7 +630,7 @@ function tvTicker(list){
   const run = items.map(e=>{
     const d=fromISO(e.date).toLocaleDateString(undefined,{weekday:"short"});
     const t=e.startTime?pretty(e.startTime):"all day";
-    return `<span><span class="kdot" style="background:${KINDS[e.kind].color}"></span>${esc(e.title)} · ${d} ${t}${e.location?" · "+esc(e.location):""}</span>`;
+    return `<span><span class="kdot" style="background:${lookFor(e).c}"></span>${esc(e.title)} · ${d} ${t}${e.location?" · "+esc(e.location):""}</span>`;
   }).join("");
   return `<div class="tv-ticker"><div class="tag">Coming up</div><div class="crawl"><div class="run">${run}${run}</div></div></div>`;
 }
@@ -512,6 +643,20 @@ function paintClock(){
 }
 function spawnOrnaments(){
   const orn=document.getElementById("tvOrn"); if(!orn)return; orn.innerHTML="";
+  if(document.body.classList.contains("winter")){
+    const flake=`<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="#8f99d8" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/><path d="M9.5 3.8 12 6.3l2.5-2.5M9.5 20.2 12 17.7l2.5 2.5M4.6 10.4l3.4.9-.9-3.4M19.4 13.6l-3.4-.9.9 3.4M4.6 13.6l3.4-.9-.9 3.4M19.4 10.4l-3.4.9.9-3.4"/></svg>`;
+    for(let i=0;i<28;i++){
+      const el=document.createElement("span"); el.className="flake";
+      const sz=(1.2+Math.random()*2.6).toFixed(2);
+      el.style.width=sz+"vw"; el.style.height=sz+"vw"; el.style.left=(Math.random()*98)+"%";
+      el.style.opacity=(0.25+Math.random()*0.45).toFixed(2);
+      el.style.setProperty("--dur",(16+Math.random()*22).toFixed(1)+"s");
+      el.style.setProperty("--del",(-Math.random()*30).toFixed(1)+"s");
+      el.style.setProperty("--dx",((Math.random()*8)-4).toFixed(1)+"vw");
+      el.innerHTML=flake; orn.appendChild(el);
+    }
+    return;
+  }
   const cols=[KINDS.program.color,KINDS.event.color,KINDS.deadline.color,"var(--ac)"];
   for(let i=0;i<10;i++){
     const el=document.createElement("i");
