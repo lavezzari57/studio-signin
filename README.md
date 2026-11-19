@@ -75,6 +75,28 @@ in that sheet's table (pick-one and typed answers are `text`, pick-many is
 `text[]`). In staff mode each of these sheets has an **Export all sign-ins
 (CSV)** button under the list.
 
+### Milestones and the A&P report
+
+In staff mode, the tracked program sheets (the Music Studio, Open Mic, Music
+Video, FTC, Youth Council, Vibe Coding, Career Panel) show a **★ milestones** button on each
+sign-in row. Tap it, then tap what you saw that kid do. Each button spells out
+what that milestone means in that program; that wording lives in
+`milestones.js`, so edit it there.
+
+Under the list the sheet may also show **Suggested from today's sign-ins**
+(for example "signed in as performing", or "here with 3 others"). Those are
+hints only. Nothing is credited until you tap Credit, and the report counts
+them separately as "sign-in only" until a staff member confirms them.
+
+On the studio sheet the hints come from the song and video sign-ins (making a
+song, mixing, fine cut) and from kids being in the studio together. Studio
+orientation rows are left out of the milestones.
+
+The **A&P Report** tile appears on the hub in staff mode. Pick a period and it
+shows unique youth per milestone, per program and overall, laid out as Q21
+(Technical) and Q22 (Social), with CSV export. Everything is stored in the
+`milestones` table.
+
 ### The name dropdown
 
 Every sheet loads `names.js`. Tap a name box and a dropdown shows people who
@@ -98,6 +120,7 @@ uses its own table:
   Ask a Job → `askajob_visits`, LinkedIn → `linkedin_visits`,
   Vibe Coding → `vibecoding_visits`
 - the name dropdown → `members` (one row per person, shared by every sheet)
+- T-Shirt Making → `tshirt_visits`
 - calendar → `calendar_events`
 - generated event sheets → `event_sheets` (definitions) + `event_signins` (rows)
 - a new sheet → make it a new table (keep the same shape: a `date` column,
@@ -133,10 +156,8 @@ only a fallback shown if the database is briefly unreachable.
 - **The studio sheet has its own staff code** (`2026`, built into
   `studio.html`). The hub's shared unlock doesn't carry into it yet. One
   small bridge line would connect them whenever you want.
-- **Milestone tracking (A&P)** — the "4 kids in the studio = they
-  collaborated" idea isn't built yet. The sign-in data already captures what
-  it needs (who, when, doing what, together); the reporting layer is the
-  next build.
+- **LinkedIn milestones** are still undecided, so that sheet only has the
+  "Helped others" staff tap. Ask a Job is attendance only on purpose.
 
 ---
 

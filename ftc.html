@@ -54,6 +54,7 @@
 <script src="config.js"></script>
 <script src="staffbar.js"></script>
 <script src="names.js"></script>
+<script src="milestones.js"></script>
 
 <div class="ttc-wrap" id="app"></div>
 
@@ -80,6 +81,8 @@ const draft = { worked:[], role:"" };
 const app = document.getElementById("app");
 const isStaff = () => TTC.isStaff();
 
+/* rows in the shape the milestone tools expect */
+const msRows = () => todayCache.map(v=>({ id:v.id, first_name:v.first, last_name:v.last, date:v.date, time_in:v.timeIn, time_out:v.timeOut, role:v.role, worked_on:v.workedOn }));
 const fromApi = r => ({ id:r.id, first:r.first_name, last:r.last_name, date:r.date, timeIn:r.time_in, timeOut:r.time_out, signedOutAt:r.signed_out_at, autoSignedOut:r.auto_signed_out, workedOn:r.worked_on||[], role:r.role, notes:r.notes, createdAt:r.created_at });
 
 function render(){
@@ -108,9 +111,10 @@ function render(){
     <div class="sheet"><h3>On the team today</h3>
       <table><thead><tr><th style="width:32%">name</th><th>role</th><th>worked on</th><th>in</th><th>out</th></tr></thead><tbody>
       ${(()=>{ const rows=todayCache.slice().sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
-        return rows.length? rows.map(v=>`<tr><td class="nm">${esc(v.first)} ${esc(v.last)}${isStaff()?` <button class="del" data-del="${v.id}">remove</button>`:""}</td><td>${esc(v.role||"")}</td><td>${(v.workedOn||[]).join(", ")}</td><td>${pretty(v.timeIn)}</td><td>${v.timeOut?pretty(v.timeOut):(isStaff()?`<button class="del" data-out="${v.id}">sign out</button>`:"—")}</td></tr>`).join("")
+        return rows.length? rows.map(v=>`<tr><td class="nm">${esc(v.first)} ${esc(v.last)}${isStaff()?` <button class="del" data-del="${v.id}">remove</button>`:""}${isStaff()?`<div>${TTCMilestones.rowButton("ftc",{id:v.id,first_name:v.first,last_name:v.last})}</div>`:""}</td><td>${esc(v.role||"")}</td><td>${(v.workedOn||[]).join(", ")}</td><td>${pretty(v.timeIn)}</td><td>${v.timeOut?pretty(v.timeOut):(isStaff()?`<button class="del" data-out="${v.id}">sign out</button>`:"—")}</td></tr>`).join("")
           : `<tr class="muted-row"><td colspan="5">Nobody signed in yet today.</td></tr>`; })()}
       </tbody></table>
+      ${isStaff()?TTCMilestones.suggestCard("ftc", msRows()):""}
     </div>
     <p class="status ${online?'':'bad'}" id="status">${online?'Live — synced.':'Connecting…'}</p>`;
   wire();
@@ -126,6 +130,7 @@ function wire(){
   const go=document.getElementById("goBtn"); if(go) go.onclick=submit;
   document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>removeRow(b.dataset.del));
   document.querySelectorAll("[data-out]").forEach(b=>b.onclick=()=>signOut(b.dataset.out));
+  if(isStaff()) TTCMilestones.wire(app, "ftc", msRows(), render);
 }
 function tg(){ const go=document.getElementById("goBtn"); if(go) go.disabled = !draft.first?.trim()||!draft.last?.trim()||busy; }
 
@@ -148,6 +153,7 @@ async function refresh(){
   try{
     const rows = await TTC.select(TABLE, `date=eq.${dateKey()}&order=created_at.asc`);
     todayCache = rows.map(fromApi); online=true;
+    try{ await TTCMilestones.loadDay("ftc", dateKey()); }catch(e){}
     if(!document.querySelector(".ttc-scrim")) render();
   }catch(e){ online=false; const s=document.getElementById("status"); if(s){s.textContent="Can't reach the list — check the WiFi."; s.className="status bad";} }
 }

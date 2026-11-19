@@ -24,7 +24,8 @@
        //   required: true                          (must answer to sign in)
        //   list: false                             (leave out of today's table)
      ],
-     staffToggles: [ { key:"helped_others", label:"Helped others" } ]  // staff-only taps on a row
+     staffToggles: [ { key:"helped_others", label:"Helped others" } ], // staff-only taps on a row
+     program: "openmic"   // turns on A&P milestone marking (must match a program in milestones.js)
    })
 
    Column types in the table:  choice/text/longtext → text,  chips → text[],
@@ -44,6 +45,7 @@ window.TTCSheet = (function () {
     const TOGGLES = cfg.staffToggles || [];
     const app = document.getElementById("app");
     const isStaff = () => TTC.isStaff();
+    const MS = (cfg.program && window.TTCMilestones && TTCMilestones.has(cfg.program)) ? TTCMilestones : null;
 
     document.title = cfg.title + " — Sign In";
     TTCBar.mount(cfg.title);
@@ -99,11 +101,12 @@ window.TTCSheet = (function () {
           <div class="tablewrap"><table><thead><tr><th style="width:30%">name</th><th>details</th><th>in</th><th>out</th></tr></thead><tbody>
           ${rows.length ? rows.map(r => `<tr>
               <td class="nm">${esc(r.first_name)} ${esc(r.last_name)}${staff ? ` <button class="del" data-del="${esc(r.id)}">remove</button>` : ""}</td>
-              <td>${summary(r)}${staff && TOGGLES.length ? `<div>${TOGGLES.map(t => `<button class="tog" data-tog="${esc(t.key)}" data-row="${esc(r.id)}" aria-pressed="${!!r[t.key]}">${r[t.key] ? "✓ " : ""}${esc(t.label)}</button>`).join("")}</div>` : ""}</td>
+              <td>${summary(r)}${staff && (TOGGLES.length || MS) ? `<div>${MS ? MS.rowButton(cfg.program, r) : ""}${TOGGLES.map(t => `<button class="tog" data-tog="${esc(t.key)}" data-row="${esc(r.id)}" aria-pressed="${!!r[t.key]}">${r[t.key] ? "✓ " : ""}${esc(t.label)}</button>`).join("")}</div>` : ""}</td>
               <td>${pretty(r.time_in)}</td>
               <td>${r.time_out ? pretty(r.time_out) : (staff ? `<button class="del" data-out="${esc(r.id)}">sign out</button>` : "—")}</td>
             </tr>`).join("") : `<tr class="muted-row"><td colspan="4">Nobody signed in yet today.</td></tr>`}
           </tbody></table></div>
+          ${staff && MS ? MS.suggestCard(cfg.program, rows) : ""}
           ${staff ? `<div class="stafftools"><button class="ttc-btn" id="exportBtn">Export all sign-ins (CSV)</button></div>` : ""}
         </div>
         <p class="status ${online ? "" : "bad"}" id="status">${online ? "Live — synced." : "Connecting…"}</p>`;
@@ -129,6 +132,7 @@ window.TTCSheet = (function () {
       app.querySelectorAll("[data-out]").forEach(b => b.onclick = () => signOut(b.dataset.out));
       app.querySelectorAll("[data-tog]").forEach(b => b.onclick = () => toggle(b.dataset.row, b.dataset.tog));
       const ex = document.getElementById("exportBtn"); if (ex) ex.onclick = exportCsv;
+      if (MS && isStaff()) MS.wire(app, cfg.program, today, render);
     }
 
     async function submit() {
@@ -187,6 +191,7 @@ window.TTCSheet = (function () {
     async function refresh() {
       try {
         today = await TTC.select(TABLE, `date=eq.${dateKey()}&order=created_at.asc`);
+        if (MS) { try { await MS.loadDay(cfg.program, dateKey()); } catch (e) {} }
         online = true;
         if (!document.querySelector(".ttc-scrim")) render();
       } catch (e) {

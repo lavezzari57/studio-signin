@@ -56,6 +56,9 @@ button{ cursor:pointer; }
 
 /* header */
 .top{ display:grid; grid-template-columns:1fr auto; gap:20px; align-items:end; }
+.homebtn{ display:inline-flex; align-items:center; gap:10px; min-height:56px; padding:0 20px 0 16px; margin-bottom:18px; border:2px solid var(--rule); border-radius:999px; background:var(--card); color:var(--ink); font-weight:800; font-size:17px; text-decoration:none; box-shadow:3px 3px 0 var(--rule); }
+.homebtn .ico{ font-size:24px; line-height:1; }
+.homebtn:active{ transform:translate(3px,3px); box-shadow:0 0 0 var(--rule); }
 h1{ font-family:var(--display); font-weight:900; font-variation-settings:"SOFT" 100, "opsz" 144; font-size:clamp(46px,7.4vw,84px); line-height:.86; letter-spacing:-.025em; margin:0; }
 .boxes{ display:flex; gap:12px; align-items:stretch; }
 .box{ border:2px solid var(--rule); background:var(--card); min-width:128px; display:flex; flex-direction:column; }
@@ -147,11 +150,27 @@ td .sub{ display:block; font-size:12.5px; color:var(--soft); line-height:1.2; }
 
 .toast{ position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom,0px)); transform:translate(-50%,20px); background:var(--ink); color:var(--paper); padding:14px 22px; font-weight:700; font-size:18px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:30; max-width:90vw; text-align:center; }
 .toast.show{ opacity:1; transform:translate(-50%,0); }
+/* ---- bridge: lets the shared milestone panel / name dropdown wear this page's look ---- */
+:root{ --b:2px solid var(--rule); --radius:0; --radius-sm:0; --shadow-sticker:5px 5px 0 var(--rule); --shadow-sticker-sm:3px 3px 0 var(--rule);
+       --muted:var(--soft); --line:var(--hair); --mono:ui-monospace,Menlo,Consolas,monospace; --ac:var(--lav); --bad:var(--warn); --tap:56px; }
+.mono{ font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.card{ background:var(--card); border:var(--b); }
+.ttc-btn{ font-weight:800; font-size:16px; min-height:54px; padding:0 20px; border:2px solid var(--rule); background:var(--card); color:var(--ink); cursor:pointer; }
+.ttc-btn-primary{ background:var(--ink); color:var(--paper); }
+.ttc-toast{ position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom,0px)); transform:translate(-50%,20px); background:var(--ink); color:var(--paper); padding:14px 22px; font-weight:700; font-size:18px; opacity:0; pointer-events:none; transition:.2s; z-index:70; max-width:90vw; text-align:center; }
+.ttc-toast.show{ opacity:1; transform:translate(-50%,0); }
+.tog, .ms-item, .ms-who input{ background:var(--card) !important; color:var(--ink) !important; }
+.tog.ms-open{ background:var(--yel) !important; color:#2A2622 !important; }
+.ms-item[aria-pressed=true]{ background:var(--mint) !important; color:#2A2622 !important; }
+.ms-item[aria-pressed=true] span, .ms-item[aria-pressed=true] small{ color:#2A2622 !important; }
+.ms-sug{ margin-top:18px; }
+
 @media (prefers-reduced-motion: reduce){ .toast,.tab{ transition:none; } }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <a class="homebtn" href="index.html" aria-label="Back to all the sign-in sheets"><span class="ico" aria-hidden="true">⌂</span> All sheets</a>
   <header class="top">
     <h1>studio<br>sign-in</h1>
     <div class="boxes">
@@ -183,6 +202,12 @@ td .sub{ display:block; font-size:12.5px; color:var(--soft); line-height:1.2; }
 <!-- modals -->
 <div class="scrim" id="scrim"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- shared pieces: backend connection, name dropdown, A&P milestone marking -->
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+<script src="names.js"></script>
+<script src="milestones.js"></script>
 
 <script>
 /* ---------- settings you can change ---------- */
@@ -305,6 +330,10 @@ function renderForm(){
   </section>`;
 }
 
+/* ---------- milestones: the studio keeps one "name" column, the shared tools want first + last ---------- */
+function msRow(v){ const p=String(v.name||"").trim().split(/\s+/); return { id:v.id, first_name:p[0]||"", last_name:p.slice(1).join(" "), date:v.date, time_in:v.timeIn, time_out:v.timeOut, mode:v.mode, activity:v.activity }; }
+const msRows = () => todayCache.filter(v => v.mode!=="orient").map(msRow);
+
 /* ---------- sheet ---------- */
 function renderSheet(){
   const M = MODES[mode];
@@ -333,12 +362,13 @@ function renderSheet(){
       <tbody>
       ${rows.map(v=>`<tr>
         <td class="nm">${!v.timeOut?'<span class="here" title="in the studio"></span>':""}${esc(v.name)}${del(v.id)}</td>
-        <td>${esc(v.project)}${v.activity?`<span class="sub">${esc(v.activity)}</span>`:""}</td>
+        <td>${esc(v.project)}${v.activity?`<span class="sub">${esc(v.activity)}</span>`:""}${isStaff()?`<div>${TTCMilestones.rowButton("studio", msRow(v))}</div>`:""}</td>
         <td class="t">${pretty(v.timeIn)}</td>
         <td class="t">${v.timeOut ? pretty(v.timeOut) : `<button class="out-btn" data-out="${v.id}">Sign out</button>`}</td></tr>`).join("")}
       ${"<tr><td></td><td></td><td></td><td></td></tr>".repeat(blanks)}
       </tbody></table></div>
     <p class="sheet-note">Leaving? Tap <b>Sign out</b> next to your name.</p>
+    ${isStaff()?TTCMilestones.suggestCard("studio", msRows()):""}
   </section>`;
 }
 
@@ -346,6 +376,7 @@ function render(){
   renderHeader();
   const focused = document.activeElement?.id;
   $("#main").innerHTML = renderForm() + renderSheet();
+  if(isStaff() && mode!=="orient") TTCMilestones.wire($("#main"), "studio", msRows(), render);
   if(focused && $("#"+focused)) { const el=$("#"+focused); el.focus(); if(el.type==="text"){ const l=el.value.length; el.setSelectionRange(l,l);} }
 }
 
@@ -525,6 +556,7 @@ async function refresh(){
   try{
     const rows = await apiSelectByDate(dateKey());
     todayCache = rows;
+    try{ await TTCMilestones.loadDay("studio", dateKey()); }catch(e){}
     online = true;
     setStatus("Live — synced with the studio.");
     if(!$("#scrim").classList.contains("open")) render(); else renderHeader();
@@ -544,8 +576,5 @@ setInterval(() => {
 render();
 refresh();
 </script>
-<!-- shared name dropdown (config.js gives it the database connection) -->
-<script src="config.js"></script>
-<script src="names.js"></script>
 </body>
 </html>

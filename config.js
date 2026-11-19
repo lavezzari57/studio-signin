@@ -46,6 +46,8 @@ window.TTC = (function () {
     { id:"linkedin",    name:"LinkedIn Workshop", file:"linkedin.html", color:"var(--sky)", emoji:"💼", blurb:"Profile workshop (16+)" },
     { id:"tshirt",      name:"T-Shirt Making", file:"tshirt.html",     color:"var(--sal)",  emoji:"👕", blurb:"Design and press your own shirt" },
     { id:"vibecoding",  name:"Vibe Coding",    file:"vibecoding.html", color:"var(--mint)", emoji:"💻", blurb:"Build your own tool or app" },
+    /* staff:true = the tile only shows on the hub in staff mode */
+    { id:"report",      name:"A&P Report",     file:"report.html",     color:"var(--yel)",  emoji:"📊", blurb:"Milestone counts for the network report", staff:true },
   ];
 
   /* =======================================================================

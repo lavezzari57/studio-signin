@@ -92,6 +92,7 @@ const ICONS = {
   tshirt: `<svg viewBox="0 0 40 40"><g ${STROKE}><path d="M14 6l-9 5 4 7 4-2v18h14V16l4 2 4-7-9-5c-1 3-3.5 4-6 4s-5-1-6-4z"/></g></svg>`,
   pathways: `<svg viewBox="0 0 40 40"><g ${STROKE}><path d="M4 15l16-8 16 8-16 8z"/><path d="M11 19v8c0 3 4 6 9 6s9-3 9-6v-8"/><path d="M36 15v10"/></g></svg>`,
   vibecoding: `<svg viewBox="0 0 40 40"><g ${STROKE}><rect x="5" y="8" width="30" height="20" rx="3"/><path d="M15 15l-4 3 4 3M25 15l4 3-4 3M21 13l-2 10"/><path d="M14 34h12M20 28v6"/></g></svg>`,
+  report: `<svg viewBox="0 0 40 40"><g ${STROKE}><path d="M7 33h26"/><rect x="9" y="20" width="5" height="9" rx="1"/><rect x="17.5" y="13" width="5" height="16" rx="1"/><rect x="26" y="7" width="5" height="22" rx="1"/></g></svg>`,
   mixdesk: `<svg viewBox="0 0 40 40"><g ${STROKE}><path d="M12 6v28M20 6v28M28 6v28"/><rect x="8.5" y="12" width="7" height="6" rx="2"/><rect x="16.5" y="20" width="7" height="6" rx="2"/><rect x="24.5" y="10" width="7" height="6" rx="2"/></g></svg>`,
   board: `<svg viewBox="0 0 40 40"><g ${STROKE}><path d="M8 17v6a2 2 0 0 0 2 2h4l10 7V8L14 15h-4a2 2 0 0 0-2 2z"/><path d="M28 14a7 7 0 0 1 0 12"/><path d="M14 25v6"/></g></svg>`,
   wall: `<svg viewBox="0 0 40 40"><g ${STROKE}><rect x="6" y="9" width="28" height="19" rx="3"/><path d="M15 33h10M20 28v5"/><path d="M12 15l5 3-5 3z"/><path d="M22 15h6M22 19h6M22 23h4"/></g></svg>`,
@@ -137,6 +138,7 @@ function renderGrid(){
   grid.innerHTML = "";
   // 1) permanent programs from config
   TTC.PROGRAMS.forEach(p => {
+    if (p.staff && !isStaff()) return;   // staff-only tiles (the A&P report)
     const live = !!p.file;
     grid.appendChild(tileEl({
       href: live ? p.file : null, soon: !live, color: p.color,
