@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Intern Board</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  /* ---- Intern Board's own look: kraft paper + index cards + marker ink ----
+     Flat, squared, quiet. Everything here overrides the sticker theme for this page only. */
+  :root{
+    --bgc:#d8c9a8;          /* kraft */
+    --paper:#f7f0de;        /* index card */
+    --ac:#b8402c;           /* red marker */
+    --blue:#27549e; --green:#1f7a52;
+    --radius:6px; --radius-sm:4px;
+    --b:2px solid var(--ink);
+    --shadow-sticker:none; --shadow-sticker-sm:none;
+  }
+  body::before, body::after{ display:none; }
+  .ttc-topbar h1{ font-weight:700; letter-spacing:-.01em; }
+  .ttc-home, .ttc-staff{ border-radius:6px; box-shadow:none; }
+  .ttc-staff[data-on="1"]{ background:var(--green); color:var(--paper); }
+  .ttc-wrap{ max-width:1100px; }
+
+  .head{ margin:8px 0 22px; }
+  .head h2{ font-family:var(--display); font-weight:800; font-size:clamp(40px,7vw,76px); line-height:.95; letter-spacing:-.03em; margin:6px 0 12px; }
+  .head h2 em{ font-style:normal; color:var(--ac); display:block; }
+  .head p{ margin:0; max-width:46ch; font-size:19px; color:var(--muted); }
+
+  .filters{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 20px; align-items:center; }
+  .filters .lbl{ font-family:var(--mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-right:4px; }
+  .fchip{ font:inherit; font-family:var(--mono); font-size:14px; min-height:44px; padding:0 16px; cursor:pointer;
+    border:var(--b); border-radius:var(--radius); background:transparent; color:var(--ink); }
+  .fchip[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+
+  .list{ display:flex; flex-direction:column; gap:14px; }
+  .task{ background:var(--paper); border:var(--b); border-radius:var(--radius); padding:20px 22px; display:grid; grid-template-columns:1fr auto; gap:14px 22px; align-items:center; position:relative; }
+  .task h3{ font-family:var(--display); font-weight:700; font-size:clamp(24px,3.4vw,32px); line-height:1.1; letter-spacing:-.02em; margin:0 0 6px; }
+  .task .why{ margin:0 0 12px; font-size:19px; line-height:1.4; }
+  .tags{ display:flex; flex-wrap:wrap; gap:8px; }
+  .tag{ font-family:var(--mono); font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; padding:5px 10px; border:1.5px solid var(--ink); border-radius:3px; }
+  .tag.time{ color:var(--blue); border-color:var(--blue); }
+  .tag.cat{ color:var(--green); border-color:var(--green); }
+  .tag.rep{ color:var(--ac); border-color:var(--ac); }
+  .tag.by{ color:var(--muted); border-color:var(--line); }
+  .acts{ display:flex; flex-direction:column; gap:8px; align-items:stretch; min-width:170px; }
+  .btn{ font:inherit; font-family:var(--display); font-weight:700; font-size:18px; min-height:56px; padding:0 22px; cursor:pointer;
+    border:var(--b); border-radius:var(--radius); background:var(--paper); color:var(--ink); }
+  .btn:active{ transform:translateY(2px); }
+  .btn.main{ background:var(--ink); color:var(--paper); }
+  .btn.small{ min-height:44px; font-size:15px; font-weight:600; }
+  .btn.danger{ color:var(--ac); border-color:var(--ac); }
+  .task.taken{ background:transparent; border-style:dashed; }
+  .who{ font-family:var(--mono); font-size:14px; }
+  .who b{ font-family:var(--display); font-size:20px; letter-spacing:-.01em; }
+  .task.done{ opacity:.75; padding:14px 22px; }
+  .task.done h3{ font-size:20px; margin:0; text-decoration:line-through; text-decoration-thickness:2px; }
+
+  h4.sec{ font-family:var(--mono); font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:34px 0 12px; font-weight:500; }
+  .empty{ border:var(--b); border-style:dashed; border-radius:var(--radius); padding:34px 22px; font-size:20px; text-align:center; }
+  .addrow{ margin:0 0 20px; }
+  .status{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-top:26px; }
+  .status.bad{ color:var(--ac); }
+
+  /* form bits inside modals */
+  .cf{ display:flex; flex-direction:column; gap:6px; margin:0 0 14px; }
+  .cf > span{ font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+  .cf input[type=text], .cf textarea{ font:inherit; font-size:18px; padding:12px 14px; border:var(--b); border-radius:var(--radius-sm); background:#fffaf0; color:var(--ink); width:100%; }
+  .cf textarea{ min-height:86px; resize:vertical; }
+  .chiprow{ display:flex; flex-wrap:wrap; gap:8px; }
+  .err{ color:var(--bad); font-size:15px; min-height:20px; margin:0 0 8px; }
+  .modal-h{ font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; margin:0 0 14px; }
+  .check{ display:flex; gap:10px; align-items:center; font-size:17px; margin:0 0 16px; }
+  .check input{ width:22px; height:22px; accent-color:var(--ink); }
+
+  @media (max-width:640px){
+    .task{ grid-template-columns:1fr; }
+    .acts{ flex-direction:row; min-width:0; }
+    .acts .btn{ flex:1; }
+  }
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script src="staffbar.js"></script>
+
+<div class="ttc-wrap" id="app"></div>
+
+<script>
+TTCBar.mount("Intern Board");
+
+const TABLE = "intern_tasks", LOG = "intern_task_log";
+const CATS  = ["Space", "Tech", "Creative", "Front desk", "Other"];
+const TIMES = ["10 min", "30 min", "1 hour+"];
+const STAFF = ["Carlos", "Nick", "Kenneth"];
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const app = document.getElementById("app");
+const isStaff = () => TTC.isStaff();
+const lsGet = k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+let tasks = [], online = false;
+let fCat = "All", fTime = "All";
+
+async function load() {
+  try { tasks = await TTC.select(TABLE, "archived=eq.false&order=created_at.asc"); online = true; }
+  catch (e) { online = false; }
+  render();
+}
+
+function fmtDay(iso) { if (!iso) return ""; return new Date(iso).toLocaleDateString(undefined, { month:"short", day:"numeric" }); }
+
+function tagsFor(t, showBy) {
+  return `<div class="tags">
+    ${t.minutes ? `<span class="tag time">${esc(t.minutes)}</span>` : ""}
+    ${t.category ? `<span class="tag cat">${esc(t.category)}</span>` : ""}
+    ${t.repeatable ? `<span class="tag rep">can be done again</span>` : ""}
+    ${showBy && t.added_by ? `<span class="tag by">from ${esc(t.added_by)}</span>` : ""}
+  </div>`;
+}
+
+function render() {
+  const staff = isStaff();
+  const pass = t => (fCat === "All" || t.category === fCat) && (fTime === "All" || t.minutes === fTime);
+  const open  = tasks.filter(t => t.status === "open" && pass(t));
+  const taken = tasks.filter(t => t.status === "taken");
+  const weekAgo = Date.now() - 7 * 864e5;
+  const done  = tasks.filter(t => t.status === "done" && t.done_at && new Date(t.done_at).getTime() > weekAgo).reverse();
+
+  const staffActs = t => staff ? `<button class="btn small" data-edit="${t.id}">Edit</button><button class="btn small danger" data-rm="${t.id}">Remove</button>` : "";
+
+  const openCards = open.map(t => `
+    <article class="task">
+      <div>
+        <h3>${esc(t.title)}</h3>
+        ${t.details ? `<p class="why">${esc(t.details)}</p>` : ""}
+        ${tagsFor(t, true)}
+      </div>
+      <div class="acts"><button class="btn main" data-take="${t.id}">I'll take this</button>${staffActs(t)}</div>
+    </article>`).join("");
+
+  const takenCards = taken.map(t => `
+    <article class="task taken">
+      <div>
+        <h3>${esc(t.title)}</h3>
+        <div class="who">Taken by <b>${esc(t.taken_by || "someone")}</b></div>
+        ${t.details ? `<p class="why" style="margin-top:8px">${esc(t.details)}</p>` : ""}
+      </div>
+      <div class="acts"><button class="btn main" data-done="${t.id}">Finished</button><button class="btn small" data-back="${t.id}">Put it back</button>${staffActs(t)}</div>
+    </article>`).join("");
+
+  const doneCards = done.map(t => `
+    <article class="task done"><h3>${esc(t.title)}</h3><div class="who">${esc(t.done_by || "")} · ${fmtDay(t.done_at)}</div></article>`).join("");
+
+  const chips = (arr, cur, key) => ["All", ...arr].map(o => `<button class="fchip" data-f="${key}" data-o="${esc(o)}" aria-pressed="${cur === o}">${esc(o)}</button>`).join("");
+
+  app.innerHTML = `
+    <div class="head">
+      <span class="mono">Kings Highway · Teen Tech Center</span>
+      <h2>Not sure what to do? <em>Pick one.</em></h2>
+      <p>Take a task, do it, then tap Finished so the next person knows.</p>
+    </div>
+    ${staff ? `<div class="addrow"><button class="btn main" id="add">Add a task</button></div>` : ""}
+    <div class="filters"><span class="lbl">How long</span>${chips(TIMES, fTime, "time")}</div>
+    <div class="filters"><span class="lbl">Kind</span>${chips(CATS, fCat, "cat")}</div>
+    <h4 class="sec">Ready to take</h4>
+    <div class="list">${openCards || `<div class="empty">${tasks.some(t => t.status === "open") ? "Nothing matches those filters." : "No open tasks right now. Ask a staff member."}</div>`}</div>
+    ${takenCards ? `<h4 class="sec">In progress</h4><div class="list">${takenCards}</div>` : ""}
+    ${doneCards ? `<h4 class="sec">Finished this week</h4><div class="list">${doneCards}</div>` : ""}
+    <p class="status ${online ? "" : "bad"}">${online ? "Live. Updates every 30 seconds." : "Connecting…"}</p>`;
+  wire();
+}
+
+function byId(id) { return tasks.find(t => t.id === id); }
+function wire() {
+  document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { if (b.dataset.f === "cat") fCat = b.dataset.o; else fTime = b.dataset.o; render(); });
+  document.querySelectorAll("[data-take]").forEach(b => b.onclick = () => takeFlow(byId(b.dataset.take)));
+  document.querySelectorAll("[data-done]").forEach(b => b.onclick = () => finish(byId(b.dataset.done)));
+  document.querySelectorAll("[data-back]").forEach(b => b.onclick = () => putBack(byId(b.dataset.back)));
+  document.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => editor(byId(b.dataset.edit)));
+  document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => removeFlow(byId(b.dataset.rm)));
+  const add = document.getElementById("add"); if (add) add.onclick = () => editor(null);
+}
+
+/* ---- intern actions ---- */
+async function logIt(t, who, action) { try { await TTC.insert(LOG, { task_id: t.id, title: t.title, intern_name: who, action }); } catch (e) {} }
+
+function takeFlow(t) {
+  TTCBar.modal(`
+    <h2 class="modal-h">${esc(t.title)}</h2>
+    <label class="cf"><span>Your first name</span><input type="text" id="n" autocomplete="off" autocapitalize="words" value="${esc(lsGet("ttc-intern-name"))}"></label>
+    <div class="err" id="e"></div>
+    <div style="display:flex;gap:10px"><button class="btn" data-close style="flex:1">Cancel</button><button class="btn main" id="go" style="flex:1">Take it</button></div>`,
+  () => {
+    const n = document.getElementById("n"); n.focus();
+    document.getElementById("go").onclick = async () => {
+      const who = n.value.trim().replace(/\s+/g, " ");
+      if (!who) { document.getElementById("e").textContent = "Type your name so people know who has it."; return; }
+      document.getElementById("go").disabled = true;
+      try {
+        // only succeeds if it is still open (two interns can't grab the same one)
+        const r = await fetch(TTC.rest(TABLE) + "?id=eq." + t.id + "&status=eq.open", {
+          method: "PATCH", headers: TTC.headers({ Prefer: "return=representation" }),
+          body: JSON.stringify({ status: "taken", taken_by: who, taken_at: new Date().toISOString() }) });
+        const rows = r.ok ? await r.json() : null;
+        if (!rows || !rows.length) { TTCBar.closeModal(); TTC.toast("Someone just took that one."); await load(); return; }
+        lsSet("ttc-intern-name", who); logIt(t, who, "taken");
+        TTCBar.closeModal(); TTC.toast("It's yours. Tap Finished when you're done."); await load();
+      } catch (e) { document.getElementById("e").textContent = "Couldn't save. Check the WiFi."; document.getElementById("go").disabled = false; }
+    };
+  });
+}
+async function finish(t) {
+  try {
+    const who = t.taken_by || lsGet("ttc-intern-name") || "";
+    const now = new Date().toISOString();
+    if (t.repeatable) await TTC.update(TABLE, t.id, { status: "open", taken_by: null, taken_at: null, done_by: who, done_at: now });
+    else await TTC.update(TABLE, t.id, { status: "done", done_by: who, done_at: now });
+    logIt(t, who, "done"); TTC.toast("Nice. Marked finished."); await load();
+  } catch (e) { TTC.toast("Couldn't save. Check the WiFi."); }
+}
+async function putBack(t) {
+  try { await TTC.update(TABLE, t.id, { status: "open", taken_by: null, taken_at: null }); logIt(t, t.taken_by || "", "put back"); await load(); }
+  catch (e) { TTC.toast("Couldn't save. Check the WiFi."); }
+}
+
+/* ---- staff: add / edit / remove ---- */
+function editor(t) {
+  const s = t || { title:"", details:"", category:"", minutes:"", added_by:lsGet("ttc-intern-addedby"), repeatable:false };
+  let cat = s.category || "", mins = s.minutes || "", by = s.added_by || "";
+  const row = (arr, cur, k) => arr.map(o => `<button type="button" class="fchip" data-k="${k}" data-o="${esc(o)}" aria-pressed="${cur === o}">${esc(o)}</button>`).join("");
+  TTCBar.modal(`
+    <h2 class="modal-h">${t ? "Edit task" : "New task"}</h2>
+    <label class="cf"><span>Task</span><input type="text" id="t-title" value="${esc(s.title)}" placeholder="e.g. Wipe down the mixing desk"></label>
+    <label class="cf"><span>What to do (optional)</span><textarea id="t-det" placeholder="Where things are, what done looks like">${esc(s.details || "")}</textarea></label>
+    <div class="cf"><span>How long</span><div class="chiprow" id="r-time">${row(TIMES, mins, "time")}</div></div>
+    <div class="cf"><span>Kind</span><div class="chiprow" id="r-cat">${row(CATS, cat, "cat")}</div></div>
+    <div class="cf"><span>From</span><div class="chiprow" id="r-by">${row(STAFF, by, "by")}</div></div>
+    <label class="check"><input type="checkbox" id="t-rep" ${s.repeatable ? "checked" : ""}> Can be done again (comes back after it's finished)</label>
+    <div class="err" id="e"></div>
+    <div style="display:flex;gap:10px"><button class="btn" data-close style="flex:1">Cancel</button><button class="btn main" id="save" style="flex:1">Save</button></div>`,
+  () => {
+    document.getElementById("t-title").focus();
+    document.querySelectorAll("[data-k]").forEach(b => b.onclick = () => {
+      const k = b.dataset.k, o = b.dataset.o;
+      if (k === "time") mins = (mins === o ? "" : o); else if (k === "cat") cat = (cat === o ? "" : o); else by = (by === o ? "" : o);
+      const cur = k === "time" ? mins : k === "cat" ? cat : by;
+      document.querySelectorAll(`[data-k="${k}"]`).forEach(x => x.setAttribute("aria-pressed", x.dataset.o === cur));
+    });
+    document.getElementById("save").onclick = async () => {
+      const title = document.getElementById("t-title").value.trim();
+      if (!title) { document.getElementById("e").textContent = "Give the task a name."; return; }
+      const row = { title, details: document.getElementById("t-det").value.trim() || null, category: cat || null, minutes: mins || null,
+                    added_by: by || null, repeatable: document.getElementById("t-rep").checked };
+      document.getElementById("save").disabled = true;
+      try { if (t) await TTC.update(TABLE, t.id, row); else await TTC.insert(TABLE, row);
+            if (by) lsSet("ttc-intern-addedby", by);
+            TTCBar.closeModal(); TTC.toast(t ? "Saved." : "Added."); await load();
+      } catch (e) { document.getElementById("e").textContent = "Couldn't save. Check the WiFi."; document.getElementById("save").disabled = false; }
+    };
+  });
+}
+function removeFlow(t) {
+  TTCBar.modal(`<h2 class="modal-h">Remove "${esc(t.title)}"?</h2>
+    <p style="margin:0 0 16px">It leaves the board. It stays in your export.</p>
+    <div style="display:flex;gap:10px"><button class="btn" data-close style="flex:1">Cancel</button><button class="btn main" id="y" style="flex:1">Remove</button></div>`,
+  () => { document.getElementById("y").onclick = async () => { try { await TTC.update(TABLE, t.id, { archived:true }); TTCBar.closeModal(); await load(); } catch (e) { TTC.toast("Couldn't remove it."); } }; });
+}
+
+TTCBar.onStaffChange(render);
+load(); setInterval(load, 30000);
+</script>
+</body>
+</html>
