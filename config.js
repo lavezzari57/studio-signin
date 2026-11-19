@@ -31,17 +31,20 @@ window.TTC = (function () {
     { id:"mixdesk",     name:"Vocal Mix Desk", file:"mixdesk.html",  color:"var(--sky)",  emoji:"🎚️", blurb:"Vocal mixing, step by step", guide:true },
     { id:"ftc",         name:"FTC Robotics",   file:"ftc.html",      color:"var(--mint)", emoji:"🤖", blurb:"Robotics team sign-in" },
     { id:"calendar",    name:"Program Calendar", file:"calendar.html", color:"var(--yel)", emoji:"🗓️", blurb:"What's on, and when" },
+    { id:"board",       name:"The Board",      file:"board.html",    color:"var(--sky)",  emoji:"📣", blurb:"Announcements + shout-outs on the TV", guide:true },
+    { id:"wall",        name:"The Wall",       file:"wall.html",     color:"var(--yel)",  emoji:"📺", blurb:"The TV loop: calendar + board", guide:true },
     { id:"podcasting",  name:"Podcasting",     file:"podcasting.html", color:"var(--lav)",  emoji:"🎧", blurb:"Podcast booth sign-in" },
     { id:"printer",     name:"3D Printer",     file:"printer.html",    color:"var(--sal)",  emoji:"🖨️", blurb:"Maker bench sign-in" },
     { id:"art",         name:"Art Studio",     file:"art.html",        color:"var(--ac)",   emoji:"🎨", blurb:"Art studio sign-in" },
-    { id:"tshirt",      name:"T-Shirt Making", file:"tshirt.html",     color:"var(--sky)",  emoji:"👕", blurb:"Drop-in shirt making" },
     /* ---- programs (each one is a small file built on sheet.js) ---- */
+    { id:"pathways",    name:"Career Pathways", file:"pathways.html", color:"var(--yel)",  emoji:"🧭", blurb:"Cohort attendance with email" },
     { id:"youthcouncil", name:"Youth Council", file:"youthcouncil.html", color:"var(--sal)",  emoji:"🗳️", blurb:"Council meeting sign-in" },
     { id:"musicvideo",  name:"Music Video",    file:"musicvideo.html", color:"var(--mint)", emoji:"🎬", blurb:"Tuesday music video program" },
     { id:"openmic",     name:"Open Mic",       file:"openmic.html",    color:"var(--ac)",   emoji:"🎤", blurb:"Performers, hosts, and supporters" },
     { id:"peerpanel",   name:"Career Panel",   file:"peerpanel.html",  color:"var(--lav)",  emoji:"🪑", blurb:"Peer-to-peer career panel" },
     { id:"askajob",     name:"Ask a Job",      file:"askajob.html",    color:"var(--yel)",  emoji:"💬", blurb:"Talk to someone about their job" },
     { id:"linkedin",    name:"LinkedIn Workshop", file:"linkedin.html", color:"var(--sky)", emoji:"💼", blurb:"Profile workshop (16+)" },
+    { id:"tshirt",      name:"T-Shirt Making", file:"tshirt.html",     color:"var(--sal)",  emoji:"👕", blurb:"Design and press your own shirt" },
     { id:"vibecoding",  name:"Vibe Coding",    file:"vibecoding.html", color:"var(--mint)", emoji:"💻", blurb:"Build your own tool or app" },
     /* staff:true = the tile only shows on the hub in staff mode */
     { id:"report",      name:"A&P Report",     file:"report.html",     color:"var(--yel)",  emoji:"📊", blurb:"Milestone counts for the network report", staff:true },
@@ -105,6 +108,53 @@ window.TTC = (function () {
     if (!res.ok) throw new Error("delete failed " + res.status);
   }
 
+  // ---- image upload to Supabase Storage (bucket must exist + be public) ----
+  // Resizes the image in the browser to maxPx on its long side, uploads it,
+  // and returns the public URL. Used by The Board; reusable elsewhere.
+  function resizeImage(file, maxPx) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width: w, height: h } = img;
+        const scale = Math.min(1, maxPx / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        c.toBlob(b => b ? resolve(b) : reject(new Error("resize failed")), "image/jpeg", 0.85);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("not an image")); };
+      img.src = url;
+    });
+  }
+  async function uploadImage(file, bucket, maxPx) {
+    bucket = bucket || "board"; maxPx = maxPx || 1600;
+    const blob = await resizeImage(file, maxPx);
+    // keep a readable slug of the original file name inside the stored name
+    const slug = (file.name || "image").replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "image";
+    const name = Date.now() + "-" + slug + ".jpg";
+    const path = bucket + "/" + name;
+    const res = await fetch(SUPABASE_URL + "/storage/v1/object/" + path, {
+      method: "POST",
+      headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "image/jpeg" },
+      body: blob
+    });
+    if (!res.ok) throw new Error("upload failed " + res.status);
+    return SUPABASE_URL + "/storage/v1/object/public/" + path;
+  }
+
+  // delete a stored image given its public URL (needs the "board deletes" storage policy)
+  async function deleteImage(url) {
+    const marker = "/storage/v1/object/public/";
+    const i = (url || "").indexOf(marker);
+    if (i < 0) return false;                       // not one of ours (pasted link) - leave alone
+    const path = url.slice(i + marker.length);
+    const res = await fetch(SUPABASE_URL + "/storage/v1/object/" + path, {
+      method: "DELETE", headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY } });
+    return res.ok;
+  }
+
   // ---- tiny shared UI helpers every sheet can use ----
   function toast(msg) {
     let t = document.querySelector(".ttc-toast");
@@ -116,6 +166,6 @@ window.TTC = (function () {
   return {
     SUPABASE_URL, SUPABASE_KEY, STAFF_MINUTES, PROGRAMS,
     isStaff, unlockStaff, lockStaff, checkPin, staffUntil,
-    select, insert, update, remove, rest, headers, toast
+    select, insert, update, remove, rest, headers, toast, uploadImage, deleteImage
   };
 })();

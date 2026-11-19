@@ -7,8 +7,8 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="sheet.css">
 <style>
-  /* ---- T-Shirt Making's own "bent": denim blue ---- */
-  :root{ --bgc:#e1e9f6; --ac:#2f56a8; --ac-text:#fff; --stripe:#2f56a8; }
+  /* ---- T-Shirt Making's own "bent": tomato red, like screen-print ink ---- */
+  :root{ --bgc:#ffd8d0; --ac:#ff5a3c; --ac-text:#fff; --stripe:#c23a20; }
 </style>
 </head>
 <body>
@@ -20,20 +20,20 @@
 <div class="ttc-wrap" id="app"></div>
 
 <script>
-/* T-Shirt Making: drop-in, no milestones tracked.
-   Edit the questions right here. How the list works is explained at the top of sheet.js. */
+/* T-Shirt Making. Edit the questions right here. How the list works is explained at the top of sheet.js. */
 TTCSheet.mount({
   title: "T-Shirt Making",
   table: "tshirt_visits",
-  eyebrow: "Kings Highway · Drop-in",
+  eyebrow: "Kings Highway · T-Shirt Making",
   headline: ["Sign in to", "t-shirts"],
-  hereLabel: "at the shirt table right now",
-  listTitle: "At the shirt table today",
-  toast: "Signed in. Go make a shirt.",
+  hereLabel: "pressing right now",
+  listTitle: "Making shirts today",
+  toast: "Signed in. Go make something.",
   fields: [
     { key:"stage", label:"what are you doing today", type:"chips",
-      options:["Designing","Cutting","Pressing","Finishing"] },
-    { key:"project", label:"what are you making (optional)", type:"text", placeholder:"design or shirt name" },
+      options:["Designing","Printing / pressing","Finishing"] },
+    { key:"project", label:"what's going on your shirt", type:"text", placeholder:"design or idea" },
+    { key:"notes", label:"anything staff should know (optional)", type:"longtext", placeholder:"size, colors, help needed" },
   ]
 });
 </script>
